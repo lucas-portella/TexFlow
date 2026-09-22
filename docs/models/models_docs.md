@@ -6,6 +6,7 @@ por definir processos produtivos, operações, cadastro de empresas, etc. - e Op
 produtivos.
 
     Class Usuario {
+        +int idUsuario;
         +String nome
         +String email
         +String senha
@@ -24,6 +25,7 @@ produtivos.
 ## Contato
 
     Class Contato {
+        +int idContato;
         +String nome;
         +String telefone;
 
@@ -36,6 +38,7 @@ produtivos.
 ## Empresa 
 
     Class Empresa {
+        +int idEmpresa;
         +String cnpj;
         +String nomeFantasia;
         +Contato contato;
@@ -50,6 +53,7 @@ Referência é um termo utilizado para designar uma modelagem de roupa.
 O aplicativo não registra nenhuma informação sobre a referência, apenas seu nome.
 
     Class Referencia {
+        +int idReferencia;
         +String nome;
 
         +Referencia();
@@ -66,6 +70,7 @@ Status utilizado para definir um processo produtivo e uma operação.
 Um processo produtivo é uma de várias etapas necessárias para confecção de uma peça de roupa.
 
     Class ProcessoProdutivo {
+        +int idProcessoProdutivo;
         +String descricao;          
         +Empresa empresaResponsavel;    // Empresa responsável pelo serviço
         +DateTime dataInicio;           // Data de início da operação 
@@ -87,6 +92,7 @@ Um ItemGrade é uma abstração para um dos itens que compoõem uma grade de um 
 Exemplo: Tamanho P - 10 peças
 
     Class ItemGrade {
+        +int idItemGrade;
         +String descricao;
         +int quantidade;
 
@@ -99,6 +105,7 @@ Exemplo: Tamanho P - 10 peças
 Uma Operação (comumente chamada de OP) define todo o processo produtivo.
 
     Class Operacao {
+        +int idOperacao;
         +Referencia referencia;
         +Empresa cliente;
         +DateTime dataEntrega;
