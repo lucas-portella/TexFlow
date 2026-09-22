@@ -12,10 +12,12 @@ produtivos.
         +Enum UserType tipo
         
         +Usuario();
+        +Usuario fromMap(Map<String, dynamic> map);
         +UserType getUserType();
         +bool validarLogin();
         +String getNomeUsuario();
         +bool alterarSenha(String novaSenha);
+        +Map<String,dynamic> toMap();
     }
 
 
@@ -26,6 +28,8 @@ produtivos.
         +String telefone;
 
         +Contato();
+        +Contato fromMap(Map<String, dynamic> map);
+        +Map<String, dynamic> toMap();
     }
 
 
@@ -36,6 +40,9 @@ produtivos.
         +String nomeFantasia;
         +Contato contato;
 
+        +Empresa();
+        +Empresa fromMap(Map<String, dynamic> map);
+        +Map<String, dynamic> toMap();
     }
 
 ## Referência
@@ -46,6 +53,8 @@ O aplicativo não registra nenhuma informação sobre a referência, apenas seu 
         +String nome;
 
         +Referencia();
+        +Referencia fromMap(Map<String, dynamic> map);
+        +Map<String, dynamic> toMap();
     }
 
 
@@ -57,16 +66,19 @@ Status utilizado para definir um processo produtivo e uma operação.
 Um processo produtivo é uma de várias etapas necessárias para confecção de uma peça de roupa.
 
     Class ProcessoProdutivo {
-        +String descricao;
-        +Empresa empresaResponsavel;
-        +DateTime dataInicio; 
-        +DateTime dataFim;
-        +Enum Status status;
+        +String descricao;          
+        +Empresa empresaResponsavel;    // Empresa responsável pelo serviço
+        +DateTime dataInicio;           // Data de início da operação 
+        +DateTime dataFim;              // Data de fim da operação
+        +Enum Status status;            // Status da operação (não iniciado, em andamento, cancelado, concluído)
+        +Usuario alteradoPor;           // Usuário que fez última alteração de status
     
         +ProcessoProdutivo();
+        +ProcessoProdutivo fromMap(Map<String, dynamic> map);
         +void setEmpresaResponsavel(Empresa empresa);
         +void setDataFim(DateTime dataFim);
         +void setStatus(Status status);
+        +Map<String, dynamic> toMap();
     }
 
 
@@ -77,6 +89,10 @@ Exemplo: Tamanho P - 10 peças
     Class ItemGrade {
         +String descricao;
         +int quantidade;
+
+        +ItemGrade();
+        +ItemGrade fromMap(Map<String, dynamic> map);
+        +Map<String, dynamic> toMap();
     }
 
 ## Operação
@@ -90,4 +106,8 @@ Uma Operação (comumente chamada de OP) define todo o processo produtivo.
         +List<ItemGrade> gradeFabricada;
         +List<ProcessoProdutivo> processos;
         +Enum Status status;
+
+        +Operacao();
+        +Operacao fromMap(Map<String, dynamic> map);
+        +Map<String, dynamic> toMap();
     }
