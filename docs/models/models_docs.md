@@ -15,9 +15,8 @@ produtivos.
         +Usuario();
         +Usuario fromMap(Map<String, dynamic> map);
         +UserType getUserType();
-        +bool validarLogin();
         +String getNomeUsuario();
-        +bool alterarSenha(String novaSenha);
+        +void alterarSenha(String novaSenha);
         +Map<String,dynamic> toMap();
     }
 
