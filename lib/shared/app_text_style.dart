@@ -20,7 +20,7 @@ class AppTextStyle {
     color: AppColors.black,
   );
 
-  static const appTextField = TextStyle(
+  static const appTextFieldHint = TextStyle(
     fontSize: 15,
     fontWeight: FontWeight.w400,
     color: AppColors.black,
