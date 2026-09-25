@@ -25,4 +25,10 @@ class AppTextStyle {
     fontWeight: FontWeight.w400,
     color: AppColors.black,
   );
+
+  static const appTextButtonStyle = TextStyle(
+    color: AppColors.white,
+    fontFamily: 'DM Sans',
+    fontWeight: FontWeight.w600,
+  );
 }
