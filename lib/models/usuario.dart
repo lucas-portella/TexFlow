@@ -1,4 +1,4 @@
-enum UserType { operador, gestor }
+enum UserType { OPERADOR, GESTOR }
 
 class Usuario {
   int idUsuario;
