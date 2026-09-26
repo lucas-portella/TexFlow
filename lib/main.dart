@@ -56,8 +56,7 @@ class _AppStartupState extends State<AppStartup> {
         }
 
         final logado = context.watch<UsuarioProvider>().logado;
-        return const LoginPage();
-        // return logado ? const DashboardPage() : const LoginPage();
+        return logado ? const DashboardPage() : const LoginPage();
       },
     );
   }
