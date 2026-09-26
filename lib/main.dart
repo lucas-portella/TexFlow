@@ -20,7 +20,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'TexFlow',
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      ),
       home: const AppStartup(),
     );
   }
@@ -48,11 +50,14 @@ class _AppStartupState extends State<AppStartup> {
       future: _carregamento,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
 
         final logado = context.watch<UsuarioProvider>().logado;
-        return logado ? const DashboardPage() : const LoginPage();
+        return const LoginPage();
+        // return logado ? const DashboardPage() : const LoginPage();
       },
     );
   }
