@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:texflow/pages/settings_page_button.dart';
 import 'package:texflow/shared/app_colors.dart';
+import 'package:texflow/shared/settings_page_button.dart';
 
 class SettingsPageCard extends StatelessWidget {
   final String title;
