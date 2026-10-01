@@ -7,6 +7,7 @@ import 'package:texflow/pages/search_page.dart';
 import 'package:texflow/providers/usuario_provider.dart';
 import 'package:texflow/services/operacao_service.dart';
 import 'package:texflow/shared/app_bottom_nav.dart';
+import 'package:texflow/shared/app_gretting.dart';
 import 'package:texflow/shared/production_card.dart';
 
 class DashboardPage extends StatefulWidget {
