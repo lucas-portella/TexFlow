@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:texflow/models/operacao.dart';
 import 'package:texflow/models/status.dart';
+import 'package:texflow/pages/login_page.dart';
 import 'package:texflow/pages/search_page.dart';
 import 'package:texflow/providers/usuario_provider.dart';
 import 'package:texflow/services/operacao_service.dart';
 import 'package:texflow/shared/app_bottom_nav.dart';
+import 'package:texflow/shared/app_gretting.dart';
 import 'package:texflow/shared/production_card.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -24,10 +26,19 @@ class _DashboardPageState extends State<DashboardPage> {
     _operacoesFuture = OperacaoService.listar();
   }
 
+  Future<void> _logout() async {
+    await context.read<UsuarioProvider>().logout();
+
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final usuario = context.watch<UsuarioProvider>().usuario;
-
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       body: SafeArea(
@@ -59,16 +70,34 @@ class _DashboardPageState extends State<DashboardPage> {
             return ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                const Text(
-                  'Bom dia,',
-                  style: TextStyle(fontSize: 15, color: Colors.grey),
-                ),
-                Text(
-                  usuario?.nome ?? '',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Consumer<UsuarioProvider>(
+                  builder: (context, usuarioProvider, child) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Bom dia,',
+                              style: TextStyle(fontSize: 15, color: Colors.grey),
+                            ),
+                            Text(
+                              usuarioProvider.usuario?.nome ?? '',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          onPressed: _logout,
+                          icon: const Icon(Icons.logout, color: Colors.grey),
+                        ),
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 20),
                 Row(
@@ -143,7 +172,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                if (operacoes.isEmpty) const Text('Nenhuma operação cadastrada'),
+                if (operacoes.isEmpty)
+                  const Text('Nenhuma operação cadastrada'),
                 for (final operacao in operacoes) ...[
                   ProductionCard(operacao: operacao),
                   const SizedBox(height: 12),
