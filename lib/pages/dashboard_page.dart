@@ -147,7 +147,7 @@ class _DashboardPageState extends State<DashboardPage> {
           },
         ),
       ),
-      bottomNavigationBar: const AppBottomNav(current: 'inicio'),
+      bottomNavigationBar: const AppBottomNav(current: DashboardPage.route),
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF1E2340),
         shape: const CircleBorder(),
