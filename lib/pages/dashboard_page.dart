@@ -10,6 +10,8 @@ import 'package:texflow/shared/app_gretting.dart';
 import 'package:texflow/shared/production_card.dart';
 
 class DashboardPage extends StatefulWidget {
+  static const String route = '/dashboard';
+
   const DashboardPage({super.key});
 
   @override
