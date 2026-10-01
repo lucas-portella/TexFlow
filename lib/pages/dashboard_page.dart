@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:texflow/models/operacao.dart';
 import 'package:texflow/models/status.dart';
+import 'package:texflow/pages/login_page.dart';
 import 'package:texflow/pages/search_page.dart';
 import 'package:texflow/providers/usuario_provider.dart';
 import 'package:texflow/services/operacao_service.dart';
@@ -25,10 +26,19 @@ class _DashboardPageState extends State<DashboardPage> {
     _operacoesFuture = OperacaoService.listar();
   }
 
+  Future<void> _logout() async {
+    await context.read<UsuarioProvider>().logout();
+
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final usuario = context.watch<UsuarioProvider>().usuario;
-
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       body: SafeArea(
@@ -60,7 +70,35 @@ class _DashboardPageState extends State<DashboardPage> {
             return ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                AppGretting(usuario: usuario),
+                Consumer<UsuarioProvider>(
+                  builder: (context, usuarioProvider, child) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Bom dia,',
+                              style: TextStyle(fontSize: 15, color: Colors.grey),
+                            ),
+                            Text(
+                              usuarioProvider.usuario?.nome ?? '',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          onPressed: _logout,
+                          icon: const Icon(Icons.logout, color: Colors.grey),
+                        ),
+                      ],
+                    );
+                  },
+                ),
                 const SizedBox(height: 20),
                 Row(
                   children: [
