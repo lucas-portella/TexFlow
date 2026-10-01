@@ -6,6 +6,7 @@ import 'package:texflow/pages/search_page.dart';
 import 'package:texflow/providers/usuario_provider.dart';
 import 'package:texflow/services/operacao_service.dart';
 import 'package:texflow/shared/app_bottom_nav.dart';
+import 'package:texflow/shared/app_gretting.dart';
 import 'package:texflow/shared/production_card.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -59,17 +60,7 @@ class _DashboardPageState extends State<DashboardPage> {
             return ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                const Text(
-                  'Bom dia,',
-                  style: TextStyle(fontSize: 15, color: Colors.grey),
-                ),
-                Text(
-                  usuario?.nome ?? '',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                AppGretting(usuario: usuario),
                 const SizedBox(height: 20),
                 Row(
                   children: [
@@ -143,7 +134,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                if (operacoes.isEmpty) const Text('Nenhuma operação cadastrada'),
+                if (operacoes.isEmpty)
+                  const Text('Nenhuma operação cadastrada'),
                 for (final operacao in operacoes) ...[
                   ProductionCard(operacao: operacao),
                   const SizedBox(height: 12),
