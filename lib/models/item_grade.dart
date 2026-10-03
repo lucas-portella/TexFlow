@@ -10,4 +10,14 @@ class ItemGrade {
       quantidade: map['quantidade'] ?? 0,
     );
   }
+
+  void incrementar() {
+    quantidade++;
+  }
+
+  void decrementar() {
+    if (quantidade > 0) {
+      quantidade--;
+    }
+  }
 }

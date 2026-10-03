@@ -12,4 +12,8 @@ class Empresa {
       nomeFantasia: map['nomeFantasia'] ?? '',
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {'id': id, 'cnpj': cnpj, 'nomeFantasia': nomeFantasia};
+  }
 }
