@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:texflow/pages/dashboard_page.dart';
 import 'package:texflow/pages/login_page.dart';
+import 'package:texflow/providers/new_operation_page_provider.dart';
 import 'package:texflow/providers/operacao_provider.dart';
 import 'package:texflow/providers/usuario_provider.dart';
 import 'package:texflow/routes/app_router.dart';
@@ -12,6 +13,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => UsuarioProvider()),
         ChangeNotifierProvider(create: (_) => OperacaoProvider()),
+        ChangeNotifierProvider(create: (_) => NewOperationPageProvider()),
       ],
       child: const MyApp(),
     ),
