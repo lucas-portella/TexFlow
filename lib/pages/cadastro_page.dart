@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:texflow/pages/login_page.dart';
 import 'package:texflow/services/auth_service.dart';
 import 'package:texflow/shared/app_colors.dart';
+import 'package:texflow/shared/app_text_field.dart';
 
 class CadastroPage extends StatefulWidget {
   const CadastroPage({super.key});
@@ -146,7 +146,6 @@ class _CadastroPageState extends State<CadastroPage> {
                         label: 'SENHA',
                         hintText: '********',
                         prefixIcon: Icons.lock_outline_rounded,
-                        suffixIcon: Icons.visibility_outlined,
                         controller: _senhaController,
                         obscureText: true,
                         validator: _validarSenha,

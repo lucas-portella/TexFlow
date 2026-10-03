@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:texflow/pages/dashboard_page.dart';
-import 'package:texflow/pages/search_page.dart';
+import 'package:texflow/routes/app_routes.dart';
+import 'package:texflow/shared/app_colors.dart';
 
 class AppBottomNav extends StatelessWidget {
   final String current;
 
   const AppBottomNav({super.key, required this.current});
 
-  void _irPara(BuildContext context, String destino) {
-    if (destino == current) return;
+  void _abrir(BuildContext context, String rota) {
+    if (rota == current) return;
 
-    final page = destino == 'inicio'
-        ? const DashboardPage()
-        : const SearchPage();
+    if (rota == AppRoutes.dashboard || rota == AppRoutes.pesquisa) {
+      Navigator.pushNamedAndRemoveUntil(context, rota, (route) => false);
+      return;
+    }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => page),
-    );
+    Navigator.pushNamed(context, rota);
   }
 
   @override
@@ -31,27 +29,27 @@ class AppBottomNav extends StatelessWidget {
           _NavItem(
             icon: Icons.home_filled,
             label: 'Início',
-            active: current == 'inicio',
-            onTap: () => _irPara(context, 'inicio'),
+            active: current == AppRoutes.dashboard,
+            onTap: () => _abrir(context, AppRoutes.dashboard),
           ),
           _NavItem(
             icon: Icons.search,
             label: 'Pesquisa',
-            active: current == 'pesquisa',
-            onTap: () => _irPara(context, 'pesquisa'),
+            active: current == AppRoutes.pesquisa,
+            onTap: () => _abrir(context, AppRoutes.pesquisa),
           ),
           const SizedBox(width: 40),
           _NavItem(
             icon: Icons.settings_outlined,
             label: 'Config.',
-            active: false,
-            onTap: () {},
+            active: current == AppRoutes.configuracoes,
+            onTap: () => _abrir(context, AppRoutes.configuracoes),
           ),
           _NavItem(
             icon: Icons.business_outlined,
             label: 'Empresa',
-            active: false,
-            onTap: () {},
+            active: current == AppRoutes.novaEmpresa,
+            onTap: () => _abrir(context, AppRoutes.novaEmpresa),
           ),
         ],
       ),
@@ -74,16 +72,27 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = active ? const Color(0xFF1E2340) : Colors.grey;
+    final color = active ? AppColors.navBar : AppColors.grey;
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 2),
-          Text(label, style: TextStyle(color: color, fontSize: 11)),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 22),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: active ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
