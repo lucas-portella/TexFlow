@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:texflow/pages/cadastro_page.dart';
+import 'package:texflow/pages/alterar_senha_page.dart';
+import 'package:texflow/pages/cadastro_usuario_page.dart';
 import 'package:texflow/pages/dashboard_page.dart';
 import 'package:texflow/pages/login_page.dart';
 import 'package:texflow/pages/new_order_page.dart';
@@ -14,7 +15,8 @@ import 'package:texflow/shared/app_coming_soon_page.dart';
 class AppRouter {
   static Map<String, WidgetBuilder> get routes => {
     AppRoutes.login: (context) => const LoginPage(),
-    AppRoutes.cadastro: (context) => const CadastroPage(),
+    AppRoutes.novoUsuario: (context) => const CadastroUsuarioPage(),
+    AppRoutes.alterarSenha: (context) => const AlterarSenhaPage(),
     AppRoutes.dashboard: (context) => const DashboardPage(),
     AppRoutes.pesquisa: (context) => const SearchPage(),
     AppRoutes.configuracoes: (context) => const SettingsPage(),

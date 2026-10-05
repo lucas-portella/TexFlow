@@ -1,14 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:texflow/models/usuario.dart';
+import 'package:provider/provider.dart';
+import 'package:texflow/providers/usuario_provider.dart';
+import 'package:texflow/routes/app_routes.dart';
+import 'package:texflow/shared/app_colors.dart';
+import 'package:texflow/shared/app_info.dart';
+import 'package:texflow/shared/application_app_bar.dart';
 import 'package:texflow/shared/settings_page_button.dart';
 import 'package:texflow/shared/settings_page_card.dart';
 import 'package:texflow/shared/settings_page_logoff_button.dart';
 import 'package:texflow/shared/settings_page_user_card.dart';
-import 'package:texflow/shared/app_colors.dart';
-import 'package:texflow/shared/application_app_bar.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
+
+  static const route = AppRoutes.configuracoes;
+
+  Future<void> _sair(BuildContext context) async {
+    await context.read<UsuarioProvider>().logout();
+
+    if (!context.mounted) return;
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.login,
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,14 +37,12 @@ class SettingsPage extends StatelessWidget {
           child: Column(
             spacing: 20,
             children: [
-              SettingsPageUserCard(
-                usuario: Usuario(
-                  idUsuario: 0,
-                  nome: 'Lucas Portella',
-                  email: '',
-                  senha: '',
-                  tipo: UserType.GESTOR,
-                ),
+              Consumer<UsuarioProvider>(
+                builder: (context, usuarioProvider, child) {
+                  final usuario = usuarioProvider.usuario;
+                  if (usuario == null) return const SizedBox.shrink();
+                  return SettingsPageUserCard(usuario: usuario);
+                },
               ),
               SettingsPageCard(
                 title: 'CONTA',
@@ -36,12 +50,14 @@ class SettingsPage extends StatelessWidget {
                   SettingsPageButton(
                     title: 'Alterar senha',
                     subtitle: 'Altere sua senha de acesso ao aplicativo.',
-                    onTap: () {},
+                    onTap: () =>
+                        Navigator.pushNamed(context, AppRoutes.alterarSenha),
                   ),
                   SettingsPageButton(
                     title: 'Cadastrar usuário',
                     subtitle: 'Cadastrar um novo operador ou supervisor',
-                    onTap: () {},
+                    onTap: () =>
+                        Navigator.pushNamed(context, AppRoutes.novoUsuario),
                   ),
                 ],
               ),
@@ -50,7 +66,7 @@ class SettingsPage extends StatelessWidget {
                 buttons: [
                   SettingsPageButton(
                     title: 'Versão do app',
-                    subtitle: '0.0.1',
+                    subtitle: AppInfo.versao,
                     onTap: () {},
                   ),
                   SettingsPageButton(
@@ -60,7 +76,7 @@ class SettingsPage extends StatelessWidget {
                   ),
                 ],
               ),
-              SettingsPageLogoffButton(onPressed: () {}),
+              SettingsPageLogoffButton(onPressed: () => _sair(context)),
             ],
           ),
         ),

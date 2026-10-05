@@ -141,21 +141,9 @@ class _LoginPageState extends State<LoginPage> {
                         validator: (valor) =>
                             validarObrigatorio(valor, 'Informe sua senha'),
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          AppTextLink(
-                            texto: 'Esqueci minha senha',
-                            onTap: _esqueciSenha,
-                          ),
-                          AppTextLink(
-                            texto: 'Cadastrar',
-                            onTap: () => Navigator.pushNamed(
-                              context,
-                              AppRoutes.cadastro,
-                            ),
-                          ),
-                        ],
+                      AppTextLink(
+                        texto: 'Esqueci minha senha',
+                        onTap: _esqueciSenha,
                       ),
                       const SizedBox(height: 8),
                       AppPrimaryButton(

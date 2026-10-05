@@ -113,7 +113,7 @@ Future<(FakeUsuarioProvider, FakeOperacaoProvider)> _abrirApp(
 }
 
 void main() {
-  testWidgets('login: valida campos, abre cadastro e esqueci minha senha', (
+  testWidgets('login: valida campos e esqueci minha senha, sem cadastro', (
     tester,
   ) async {
     await _abrirApp(tester, logado: false);
@@ -131,9 +131,7 @@ void main() {
     await tester.tap(find.text('Cancelar'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Cadastrar'));
-    await tester.pumpAndSettle();
-    expect(find.text('Criar conta'), findsWidgets);
+    expect(find.text('Cadastrar'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
