@@ -20,24 +20,6 @@ class AuthService {
     throw Exception(mensagemDeErro(response, 'Erro ao fazer login'));
   }
 
-  static Future<Usuario> cadastro(
-    String nome,
-    String email,
-    String senha,
-  ) async {
-    final response = await http.post(
-      Uri.parse('${ApiConfig.baseUrl}/api/auth/cadastro'),
-      headers: cabecalhosJson,
-      body: jsonEncode({'nome': nome, 'email': email, 'senha': senha}),
-    );
-
-    if (response.statusCode == 200) {
-      return Usuario.fromMap(decodificar(response));
-    }
-
-    throw Exception(mensagemDeErro(response, 'Erro ao cadastrar'));
-  }
-
   static Future<void> esqueciSenha(String email) async {
     final response = await http.post(
       Uri.parse('${ApiConfig.baseUrl}/api/auth/esqueci-senha'),

@@ -20,6 +20,18 @@ class OperacaoService {
     return lista.map((item) => Operacao.fromMap(item)).toList();
   }
 
+  static Future<Operacao> buscarPorId(int id) async {
+    final response = await http.get(
+      Uri.parse('${ApiConfig.baseUrl}/api/operacoes/$id'),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(mensagemDeErro(response, 'Erro ao buscar a produção'));
+    }
+
+    return Operacao.fromMap(decodificar(response));
+  }
+
   static Future<void> criar({
     required int clienteId,
     required String dataEntrega,

@@ -113,7 +113,7 @@ Future<(FakeUsuarioProvider, FakeOperacaoProvider)> _abrirApp(
 }
 
 void main() {
-  testWidgets('login: valida campos, abre cadastro e esqueci minha senha', (
+  testWidgets('login: valida campos e esqueci minha senha, sem cadastro', (
     tester,
   ) async {
     await _abrirApp(tester, logado: false);
@@ -131,9 +131,7 @@ void main() {
     await tester.tap(find.text('Cancelar'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Cadastrar'));
-    await tester.pumpAndSettle();
-    expect(find.text('Criar conta'), findsWidgets);
+    expect(find.text('Cadastrar'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -207,5 +205,24 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Tela em desenvolvimento'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('card da pesquisa abre a tela de detalhes da produção', (
+    tester,
+  ) async {
+    await _abrirApp(tester);
+
+    await tester.tap(find.text('Pesquisa'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Moda João'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Detalhes da produção'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.byIcon(Icons.chevron_left));
+    await tester.pumpAndSettle();
+    expect(find.text('RECENTES'), findsOneWidget);
   });
 }
