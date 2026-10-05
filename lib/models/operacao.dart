@@ -1,5 +1,6 @@
 import 'package:texflow/models/empresa.dart';
 import 'package:texflow/models/item_grade.dart';
+import 'package:texflow/models/processo_produtivo.dart';
 import 'package:texflow/models/referencia.dart';
 import 'package:texflow/models/status.dart';
 
@@ -10,6 +11,7 @@ class Operacao {
   String? dataEntrega;
   List<ItemGrade> gradePedido;
   List<ItemGrade> gradeFabricada;
+  List<ProcessoProdutivo> processos;
   Status status;
 
   Operacao({
@@ -19,6 +21,7 @@ class Operacao {
     this.dataEntrega,
     required this.gradePedido,
     required this.gradeFabricada,
+    this.processos = const [],
     required this.status,
   });
 
@@ -36,15 +39,23 @@ class Operacao {
       gradeFabricada: (map['gradeFabricada'] as List<dynamic>? ?? [])
           .map((item) => ItemGrade.fromMap(item))
           .toList(),
+      processos: (map['processos'] as List<dynamic>? ?? [])
+          .map((item) => ProcessoProdutivo.fromMap(item))
+          .toList(),
       status: Status.values.byName(map['status'] ?? 'naoIniciado'),
     );
   }
+
+  String get codigo => 'OP-$id';
 
   int get totalPedido =>
       gradePedido.fold(0, (soma, item) => soma + item.quantidade);
 
   int get totalFabricado =>
       gradeFabricada.fold(0, (soma, item) => soma + item.quantidade);
+
+  int get processosConcluidos =>
+      processos.where((processo) => processo.status == Status.concluido).length;
 
   double? get progresso {
     if (totalPedido == 0) return null;

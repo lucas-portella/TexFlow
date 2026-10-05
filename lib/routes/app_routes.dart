@@ -6,4 +6,5 @@ class AppRoutes {
   static const configuracoes = '/configuracoes';
   static const novoPedido = '/novo-pedido';
   static const novaEmpresa = '/nova-empresa';
+  static const operacaoDetalhes = '/operacao';
 }

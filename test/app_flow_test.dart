@@ -208,4 +208,23 @@ void main() {
     expect(find.text('Tela em desenvolvimento'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('card da pesquisa abre a tela de detalhes da produção', (
+    tester,
+  ) async {
+    await _abrirApp(tester);
+
+    await tester.tap(find.text('Pesquisa'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Moda João'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Detalhes da produção'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.byIcon(Icons.chevron_left));
+    await tester.pumpAndSettle();
+    expect(find.text('RECENTES'), findsOneWidget);
+  });
 }

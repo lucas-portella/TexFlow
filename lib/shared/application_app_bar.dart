@@ -14,19 +14,20 @@ class ApplicationAppBar extends StatelessWidget implements PreferredSizeWidget {
       centerTitle: false,
       backgroundColor: AppColors.white,
       shape: Border(bottom: BorderSide(color: AppColors.grey, width: 0.3)),
-      leading: Center(
-        child: Container(
-          width: 30,
-          height: 30,
-          decoration: BoxDecoration(
-            color: AppColors.appbarIconBackground,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: IconButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            icon: Icon(Icons.chevron_left),
+      leadingWidth: 60,
+      titleSpacing: 12,
+      leading: Align(
+        alignment: Alignment.centerLeft,
+        child: Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () => Navigator.of(context).pop(),
+            child: const SizedBox(
+              width: 36,
+              height: 36,
+              child: Icon(Icons.chevron_left, size: 28, color: AppColors.ink),
+            ),
           ),
         ),
       ),

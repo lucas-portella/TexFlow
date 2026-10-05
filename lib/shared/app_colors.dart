@@ -25,4 +25,11 @@ class AppColors {
   static const loginBackground = Color.fromARGB(255, 236, 235, 235);
   static const screenBackground = Color(0xFFF5F6FA);
   static const progressTrack = Color(0xFFEDEEF3);
+  static const ink = Color(0xFF161A2B);
+  static const muted = Color(0xFF7A8098);
+  static const warning = Color(0xFFE0A23C);
+  static const cardBorder = Color(0xFFE9EBF2);
+  static const tableStripe = Color(0xFFFAFAFC);
+  static const tableTotal = Color(0xFFEDF0F7);
+  static const tableText = Color(0xFF3D4260);
 }
