@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:texflow/models/empresa.dart';
+import 'package:texflow/models/item_grade.dart';
+import 'package:texflow/models/processo_produtivo.dart';
+import 'package:texflow/providers/new_operation_page_provider.dart';
 import 'package:texflow/shared/app_colors.dart';
 
 const navy = Color(0xFF252A5C);
@@ -39,7 +44,7 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
     setState(() => grade[t] = v);
   }
 
-  Future<void> escolherData() async {
+  Future<void> escolherData(BuildContext context) async {
     final hoje = DateTime.now();
     final d = await showDatePicker(
       context: context,
@@ -47,7 +52,11 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
       firstDate: hoje,
       lastDate: DateTime(hoje.year + 5),
     );
+
     if (d == null) return;
+    final controller = context.read<NewOperationPageProvider>();
+
+    controller.updateDataEntrega(d);
     data.text =
         '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
   }
@@ -75,46 +84,50 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            cabecalho(),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                children: [
-                  cartaoCliente(),
-                  const SizedBox(height: 16),
-                  cartaoGrade(),
-                  const SizedBox(height: 16),
-                  cartaoProcessos(),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 52,
-                    child: FilledButton(
-                      onPressed: criarPedido,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.mainBlue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+    return Consumer<NewOperationPageProvider>(
+      builder: (context, controller, child) {
+        return Scaffold(
+          body: SafeArea(
+            child: Column(
+              children: [
+                cabecalho(),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                    children: [
+                      cartaoCliente(),
+                      const SizedBox(height: 16),
+                      cartaoGrade(),
+                      const SizedBox(height: 16),
+                      cartaoProcessos(),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 52,
+                        child: FilledButton(
+                          onPressed: controller.criarPedido,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.mainBlue,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: const Text(
+                            'Criar pedido',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
                       ),
-                      child: const Text(
-                        'Criar pedido',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -214,28 +227,165 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
   }
 
   Widget cartaoCliente() {
-    return cartao([
-      titulo('CLIENTE'),
-      rotulo('EMPRESA CLIENTE'),
-      TextField(
-        controller: empresa,
-        decoration: decoracao(
-          'Ex.: Moda Bella Confecções',
-          icone: Icons.business_center_outlined,
-        ),
-      ),
-      rotulo('DATA DE ENTREGA'),
-      TextField(
-        controller: data,
-        readOnly: true,
-        onTap: escolherData,
-        decoration: decoracao(
-          'DD/MM/AAAA',
-          icone: Icons.calendar_today_outlined,
-        ),
-      ),
-      const SizedBox(height: 4),
-    ]);
+    return Consumer<NewOperationPageProvider>(
+      builder: (context, controller, child) {
+        bool clienteSelecionado = controller.cliente != null;
+        if (clienteSelecionado) {
+          return cartao([
+            titulo('CLIENTE'),
+            rotulo('EMPRESA CLIENTE'),
+            GestureDetector(
+              onTap: () {
+                ModalSelecionarEmpresa(
+                  context,
+                  controller.listarEmpresas(),
+                  controller.setCliente,
+                );
+              },
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.business_center_outlined),
+                    SizedBox(width: 12),
+                    Text(controller.cliente!.nomeFantasia),
+                  ],
+                ),
+              ),
+            ),
+            rotulo('DATA DE ENTREGA'),
+            TextField(
+              controller: data,
+              readOnly: true,
+              onTap: () => escolherData(context),
+              decoration: decoracao(
+                'DD/MM/AAAA',
+                icone: Icons.calendar_today_outlined,
+              ),
+            ),
+            const SizedBox(height: 4),
+          ]);
+        }
+
+        return cartao([
+          titulo('CLIENTE'),
+          rotulo('EMPRESA CLIENTE'),
+          TextButton(
+            onPressed: () {
+              ModalSelecionarEmpresa(
+                context,
+                controller.listarEmpresas(),
+                controller.setCliente,
+              );
+            },
+            child: Container(
+              padding: EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: roxo,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              width: double.infinity,
+              child: Center(
+                child: Text(
+                  'Selecione cliente',
+                  style: TextStyle(color: Colors.white, fontFamily: 'DM Sans'),
+                ),
+              ),
+            ),
+          ),
+          rotulo('DATA DE ENTREGA'),
+          TextField(
+            controller: data,
+            readOnly: true,
+            onTap: () => escolherData(context),
+            decoration: decoracao(
+              'DD/MM/AAAA',
+              icone: Icons.calendar_today_outlined,
+            ),
+          ),
+          const SizedBox(height: 4),
+        ]);
+      },
+    );
+  }
+
+  Future<dynamic> ModalSelecionarEmpresa(
+    BuildContext context,
+    Future<List<Empresa>>? futureBuilder,
+    void Function(Empresa) setFunction,
+  ) {
+    return showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return FutureBuilder<List<Empresa>>(
+          future: futureBuilder,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              return const Center(child: Text('Erro ao carregar empresas'));
+            }
+
+            final empresas = snapshot.data ?? [];
+
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: const Icon(Icons.business, color: navy),
+                  ),
+                  const Text(
+                    'Selecione uma empresa:',
+                    style: TextStyle(
+                      fontFamily: 'DM Sans',
+                      color: navy,
+                      fontSize: 18,
+                    ),
+                  ),
+
+                  for (final empresa in empresas)
+                    TextButton(
+                      onPressed: () {
+                        setFunction(empresa);
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        margin: EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: roxo,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Center(
+                          child: Text(
+                            empresa.nomeFantasia,
+                            style: const TextStyle(
+                              fontFamily: 'DM Sans',
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   Widget botaoQtd(IconData i, VoidCallback f) {
@@ -254,133 +404,215 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
     );
   }
 
-  Widget linhaTamanho(String t) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 10),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 34,
-            child: Text(
-              t,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
-            ),
-          ),
-          botaoQtd(Icons.remove, () => alterar(t, -1)),
-          Expanded(
-            child: Container(
-              height: 34,
-              color: campo,
-              alignment: Alignment.center,
-              child: Text(
-                '${grade[t]}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
+  Widget linhaTamanho(ItemGrade item) {
+    return Consumer<NewOperationPageProvider>(
+      builder: (context, controller, child) {
+        return Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 34,
+                child: Text(
+                  item.descricao,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
                 ),
               ),
-            ),
+              botaoQtd(
+                Icons.remove,
+                () => controller.decrementarQuantidadeItemGrade(item),
+              ),
+              Expanded(
+                child: Container(
+                  height: 34,
+                  color: campo,
+                  alignment: Alignment.center,
+                  child: Text(
+                    '${item.quantidade}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+              botaoQtd(
+                Icons.add,
+                () => controller.incrementarQuantidadeItemGrade(item),
+              ),
+            ],
           ),
-          botaoQtd(Icons.add, () => alterar(t, 1)),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget cartaoGrade() {
-    return cartao([
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          titulo('GRADE DO PEDIDO'),
-          Text(
-            '$total peças',
-            style: const TextStyle(
-              color: roxo,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(height: 4),
-      for (final t in tamanhos) linhaTamanho(t),
-    ]);
-  }
-
-  Widget itemProcesso(int i) {
-    final p = processos[i];
-    return Container(
-      margin: const EdgeInsets.only(top: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: campo,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        children: [
+    return Consumer<NewOperationPageProvider>(
+      builder: (context, controller, child) {
+        final total = controller.gradePedido.fold<int>(
+          0,
+          (previousValue, element) => previousValue + element.quantidade,
+        );
+        return cartao([
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              titulo('GRADE DO PEDIDO'),
               Text(
-                'Processo ${i + 1}',
+                '$total peças',
                 style: const TextStyle(
+                  color: roxo,
                   fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF5E5E68),
-                ),
-              ),
-              InkWell(
-                onTap: () => removerProcesso(i),
-                child: const Icon(
-                  Icons.delete_outline,
-                  size: 18,
-                  color: vermelho,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: p.nome,
-            decoration: decoracao('Nome do processo'),
+          const SizedBox(height: 4),
+          for (final t in controller.gradePedido) linhaTamanho(t),
+        ]);
+      },
+    );
+  }
+
+  Widget itemProcesso(ProcessoProdutivo processo) {
+    return Consumer<NewOperationPageProvider>(
+      builder: (context, controller, child) {
+        bool selecionouEmpresa = processo.empresaResponsavel != null;
+        Widget mostradorEmpresa;
+        if (selecionouEmpresa) {
+          mostradorEmpresa = GestureDetector(
+            onTap: () {
+              ModalSelecionarEmpresa(context, controller.listarEmpresas(), (
+                empresa,
+              ) {
+                controller.updateEmpresaProcessoProdutivo(processo, empresa);
+              });
+            },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.business_center_outlined),
+                  SizedBox(width: 12),
+                  Text(processo.empresaResponsavel!.nomeFantasia),
+                ],
+              ),
+            ),
+          );
+        } else {
+          mostradorEmpresa = TextButton(
+            onPressed: () {
+              ModalSelecionarEmpresa(context, controller.listarEmpresas(), (
+                empresa,
+              ) {
+                controller.updateEmpresaProcessoProdutivo(processo, empresa);
+              });
+            },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: roxo,
+              ),
+              child: Center(
+                child: Text(
+                  'Selecionar empresa responsável',
+                  style: TextStyle(fontFamily: 'DM Sans', color: Colors.white),
+                ),
+              ),
+            ),
+          );
+        }
+
+        return Container(
+          margin: const EdgeInsets.only(top: 12),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: campo,
+            borderRadius: BorderRadius.circular(14),
           ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: p.empresa,
-            decoration: decoracao('Empresa responsável'),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Processo',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF5E5E68),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () => controller.deletarProcessoProdutivo(processo),
+                    child: const Icon(
+                      Icons.delete_outline,
+                      size: 18,
+                      color: vermelho,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                onChanged: (value) {
+                  controller.updateDescricaoProcessoProdutivo(processo, value);
+                },
+                controller: TextEditingController(text: processo.descricao),
+                decoration: decoracao(processo.descricao),
+              ),
+              const SizedBox(height: 8),
+              mostradorEmpresa,
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget cartaoProcessos() {
-    return cartao([
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          titulo('PROCESSOS PRODUTIVOS'),
-          InkWell(
-            onTap: adicionarProcesso,
-            child: const Row(
-              children: [
-                Icon(Icons.add, size: 16, color: roxo),
-                SizedBox(width: 2),
-                Text(
-                  'Adicionar',
-                  style: TextStyle(
-                    color: roxo,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
+    return Consumer<NewOperationPageProvider>(
+      builder: (context, controller, child) {
+        return cartao([
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              titulo('PROCESSOS PRODUTIVOS'),
+              InkWell(
+                onTap: controller.criarProcessoProdutivo,
+                child: const Row(
+                  children: [
+                    Icon(Icons.add, size: 16, color: roxo),
+                    SizedBox(width: 2),
+                    Text(
+                      'Adicionar',
+                      style: TextStyle(
+                        color: roxo,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
-      for (var i = 0; i < processos.length; i++) itemProcesso(i),
-    ]);
+          for (final i in controller.processos) itemProcesso(i),
+        ]);
+      },
+    );
   }
 }
