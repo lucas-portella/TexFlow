@@ -2,12 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:texflow/pages/dashboard_page.dart';
 import 'package:texflow/pages/login_page.dart';
+import 'package:texflow/providers/new_operation_page_provider.dart';
+import 'package:texflow/providers/operacao_provider.dart';
 import 'package:texflow/providers/usuario_provider.dart';
+import 'package:texflow/routes/app_router.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => UsuarioProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UsuarioProvider()),
+        ChangeNotifierProvider(create: (_) => OperacaoProvider()),
+        ChangeNotifierProvider(create: (_) => NewOperationPageProvider()),
+      ],
       child: const MyApp(),
     ),
   );
@@ -21,8 +28,11 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'TexFlow',
       theme: ThemeData(
+        fontFamily: 'DM Sans',
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
+      routes: AppRouter.routes,
+      onUnknownRoute: AppRouter.rotaDesconhecida,
       home: const AppStartup(),
     );
   }
@@ -55,8 +65,13 @@ class _AppStartupState extends State<AppStartup> {
           );
         }
 
-        final logado = context.watch<UsuarioProvider>().logado;
-        return logado ? const DashboardPage() : const LoginPage();
+        return Consumer<UsuarioProvider>(
+          builder: (context, usuarioProvider, child) {
+            return usuarioProvider.logado
+                ? const DashboardPage()
+                : const LoginPage();
+          },
+        );
       },
     );
   }

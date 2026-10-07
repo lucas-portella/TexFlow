@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:texflow/models/usuario.dart';
 import 'package:texflow/services/auth_service.dart';
+import 'package:texflow/services/usuario_service.dart';
 
 class UsuarioProvider extends ChangeNotifier {
   Usuario? _usuario;
@@ -29,6 +30,14 @@ class UsuarioProvider extends ChangeNotifier {
       _usuario = Usuario.fromMap(jsonDecode(dados));
       notifyListeners();
     }
+  }
+
+  Future<void> alterarSenha(String senhaAtual, String novaSenha) async {
+    await UsuarioService.alterarSenha(
+      usuarioId: _usuario!.idUsuario,
+      senhaAtual: senhaAtual,
+      novaSenha: novaSenha,
+    );
   }
 
   Future<void> logout() async {

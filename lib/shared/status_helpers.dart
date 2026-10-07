@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:texflow/models/status.dart';
+import 'package:texflow/shared/app_colors.dart';
 
 String statusLabel(Status status) {
   switch (status) {
@@ -17,12 +18,12 @@ String statusLabel(Status status) {
 Color statusColor(Status status) {
   switch (status) {
     case Status.naoIniciado:
-      return const Color(0xFF8B5CF6);
+      return AppColors.purple;
     case Status.emAndamento:
-      return const Color(0xFF4C5FE0);
+      return AppColors.primary;
     case Status.concluido:
-      return const Color(0xFF2CB88A);
+      return AppColors.success;
     case Status.cancelado:
-      return const Color(0xFFE0524A);
+      return AppColors.danger;
   }
 }
