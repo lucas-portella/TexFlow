@@ -11,6 +11,7 @@ import 'package:texflow/pages/settings_page.dart';
 import 'package:texflow/providers/operacao_detalhe_provider.dart';
 import 'package:texflow/routes/app_routes.dart';
 import 'package:texflow/shared/app_coming_soon_page.dart';
+import 'package:texflow/pages/register_company.dart';
 
 class AppRouter {
   static Map<String, WidgetBuilder> get routes => {
@@ -21,6 +22,7 @@ class AppRouter {
     AppRoutes.pesquisa: (context) => const SearchPage(),
     AppRoutes.configuracoes: (context) => const SettingsPage(),
     AppRoutes.novoPedido: (context) => const NovoPedidoPage(),
+    AppRoutes.novaEmpresa: (context) => const CadastroEmpresaPage(),
     AppRoutes.operacaoDetalhes: (context) {
       final id = ModalRoute.of(context)!.settings.arguments as int;
       return ChangeNotifierProvider(
