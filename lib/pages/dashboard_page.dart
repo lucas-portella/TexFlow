@@ -5,6 +5,7 @@ import 'package:texflow/models/status.dart';
 import 'package:texflow/pages/login_page.dart';
 import 'package:texflow/pages/search_page.dart';
 import 'package:texflow/providers/usuario_provider.dart';
+import 'package:texflow/routes/app_routes.dart';
 import 'package:texflow/services/operacao_service.dart';
 import 'package:texflow/shared/app_bottom_nav.dart';
 import 'package:texflow/shared/app_gretting.dart';
@@ -189,7 +190,9 @@ class _DashboardPageState extends State<DashboardPage> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF1E2340),
         shape: const CircleBorder(),
-        onPressed: () {},
+        onPressed: () {
+          Navigator.pushNamed(context, AppRoutes.novoPedido);
+        },
         child: const Icon(Icons.add, color: Colors.white),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
