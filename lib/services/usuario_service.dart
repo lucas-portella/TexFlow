@@ -12,6 +12,7 @@ class UsuarioService {
     required String senha,
     required UserType tipo,
   }) async {
+    //response recebe a resposta da requisição http.post para criar um novo usuário na API, enviando os dados do usuário no corpo da requisição em formato JSON.
     final response = await http.post(
       Uri.parse('${ApiConfig.baseUrl}/api/usuarios'),
       headers: cabecalhosJson,

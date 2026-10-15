@@ -26,7 +26,9 @@ class AppPrimaryButton extends StatelessWidget {
           foregroundColor: AppColors.white,
           elevation: 6,
           shadowColor: const Color(0x55000000),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
         child: carregando
             ? const SizedBox(

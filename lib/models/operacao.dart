@@ -9,6 +9,10 @@ class Operacao {
   Referencia? referencia;
   Empresa? cliente;
   String? dataEntrega;
+  double? valorPeca;
+  int? quantidadeSolicitada;
+  int? quantidadeProduzida;
+  String? dataFinalizacao;
   List<ItemGrade> gradePedido;
   List<ItemGrade> gradeFabricada;
   List<ProcessoProdutivo> processos;
@@ -19,6 +23,10 @@ class Operacao {
     this.referencia,
     this.cliente,
     this.dataEntrega,
+    this.valorPeca,
+    this.quantidadeSolicitada,
+    this.quantidadeProduzida,
+    this.dataFinalizacao,
     required this.gradePedido,
     required this.gradeFabricada,
     this.processos = const [],
@@ -33,6 +41,10 @@ class Operacao {
           : null,
       cliente: map['cliente'] != null ? Empresa.fromMap(map['cliente']) : null,
       dataEntrega: map['dataEntrega'],
+      valorPeca: (map['valorPeca'] as num?)?.toDouble(),
+      quantidadeSolicitada: map['quantidadeSolicitada'],
+      quantidadeProduzida: map['quantidadeProduzida'],
+      dataFinalizacao: map['dataFinalizacao'],
       gradePedido: (map['gradePedido'] as List<dynamic>? ?? [])
           .map((item) => ItemGrade.fromMap(item))
           .toList(),
@@ -47,6 +59,8 @@ class Operacao {
   }
 
   String get codigo => 'OP-$id';
+
+  bool get finalizada => dataFinalizacao != null;
 
   int get totalPedido =>
       gradePedido.fold(0, (soma, item) => soma + item.quantidade);

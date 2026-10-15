@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:texflow/models/operacao.dart';
 import 'package:texflow/models/status.dart';
-import 'package:texflow/pages/login_page.dart';
+import 'package:texflow/models/usuario.dart';
 import 'package:texflow/pages/search_page.dart';
 import 'package:texflow/providers/usuario_provider.dart';
 import 'package:texflow/routes/app_routes.dart';
 import 'package:texflow/services/operacao_service.dart';
 import 'package:texflow/shared/app_bottom_nav.dart';
+import 'package:texflow/shared/app_drawer.dart';
 import 'package:texflow/shared/app_gretting.dart';
 import 'package:texflow/shared/production_card.dart';
 
@@ -31,17 +32,21 @@ class _DashboardPageState extends State<DashboardPage> {
     await context.read<UsuarioProvider>().logout();
 
     if (!mounted) return;
-    Navigator.pushAndRemoveUntil(
+    Navigator.pushNamedAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (context) => const LoginPage()),
+      AppRoutes.login,
       (route) => false,
     );
   }
+
+  bool get _ehGestor =>
+      context.read<UsuarioProvider>().usuario?.tipo == UserType.GESTOR;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
+      drawer: _ehGestor ? const AppDrawer() : null,
       body: SafeArea(
         child: FutureBuilder<List<Operacao>>(
           future: _operacoesFuture,
@@ -73,33 +78,13 @@ class _DashboardPageState extends State<DashboardPage> {
               children: [
                 Consumer<UsuarioProvider>(
                   builder: (context, usuarioProvider, child) {
-                    return AppGretting(usuario: usuarioProvider.usuario);
-                    //   return Row(/
-                    //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    //     children: [
-                    //       Column(
-                    //         crossAxisAlignment: CrossAxisAlignment.start,
-                    //         children: [
-                    //           const Text(
-                    //             'Bom dia,',
-                    //             style: TextStyle(fontSize: 15, color: Colors.grey),
-                    //           ),
-                    //           Text(
-                    //             usuarioProvider.usuario?.nome ?? '',
-                    //             style: const TextStyle(
-                    //               fontSize: 24,
-                    //               fontWeight: FontWeight.bold,
-                    //             ),
-                    //           ),
-                    //         ],
-                    //       ),
-                    //       IconButton(
-                    //         onPressed: _logout,
-                    //         icon: const Icon(Icons.logout, color: Colors.grey),
-                    //       ),
-                    //     ],
-                    //   );
-                    // },
+                    return AppGretting(
+                      usuario: usuarioProvider.usuario,
+                      onLogout: _logout,
+                      onMenu: _ehGestor
+                          ? () => Scaffold.of(context).openDrawer()
+                          : null,
+                    );
                   },
                 ),
                 const SizedBox(height: 20),

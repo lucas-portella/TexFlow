@@ -34,7 +34,10 @@ class OperacaoService {
 
   static Future<void> criar({
     required int clienteId,
+    required int referenciaId,
     required String dataEntrega,
+    required double valorPeca,
+    required int quantidadeSolicitada,
     required List<Map<String, dynamic>> gradePedido,
     required List<Map<String, dynamic>> processos,
   }) async {
@@ -43,7 +46,10 @@ class OperacaoService {
       headers: cabecalhosJson,
       body: jsonEncode({
         'cliente': {'id': clienteId},
+        'referencia': {'id': referenciaId},
         'dataEntrega': dataEntrega,
+        'valorPeca': valorPeca,
+        'quantidadeSolicitada': quantidadeSolicitada,
         'status': Status.naoIniciado.name,
         'gradePedido': gradePedido,
         'processos': processos,
@@ -53,6 +59,23 @@ class OperacaoService {
     if (response.statusCode != 200) {
       throw Exception(mensagemDeErro(response, 'Erro ao criar o pedido'));
     }
+  }
+
+  static Future<Operacao> finalizar({
+    required int operacaoId,
+    required int quantidadeProduzida,
+  }) async {
+    final response = await http.put(
+      Uri.parse('${ApiConfig.baseUrl}/api/operacoes/$operacaoId/finalizar'),
+      headers: cabecalhosJson,
+      body: jsonEncode({'quantidadeProduzida': quantidadeProduzida}),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(mensagemDeErro(response, 'Erro ao finalizar a produção'));
+    }
+
+    return Operacao.fromMap(decodificar(response));
   }
 
   static Future<Operacao> atualizarStatusProcesso({

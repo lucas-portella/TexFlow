@@ -3,6 +3,7 @@ import 'package:texflow/models/processo_produtivo.dart';
 import 'package:texflow/models/status.dart';
 import 'package:texflow/shared/app_card.dart';
 import 'package:texflow/shared/app_colors.dart';
+import 'package:texflow/shared/formatters.dart';
 import 'package:texflow/shared/status_badge.dart';
 import 'package:texflow/shared/status_helpers.dart';
 
@@ -10,6 +11,16 @@ class ProcessTile extends StatelessWidget {
   final ProcessoProdutivo processo;
 
   const ProcessTile({super.key, required this.processo});
+
+  String get _responsavel {
+    final nome =
+        processo.funcionario?.nome ??
+        processo.empresaResponsavel?.nomeFantasia ??
+        'Sem responsável';
+    final valor = processo.valorComissao;
+    if (valor == null) return nome;
+    return '$nome · ${formatarMoeda(valor)} por peça';
+  }
 
   IconData _icone(Status status) {
     switch (status) {
@@ -58,8 +69,7 @@ class ProcessTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    processo.empresaResponsavel?.nomeFantasia ??
-                        'Sem empresa responsável',
+                    _responsavel,
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.muted,

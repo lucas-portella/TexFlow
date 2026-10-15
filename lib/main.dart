@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:texflow/pages/dashboard_page.dart';
 import 'package:texflow/pages/login_page.dart';
+import 'package:texflow/providers/etapa_provider.dart';
+import 'package:texflow/providers/fechamento_provider.dart';
+import 'package:texflow/providers/funcionario_provider.dart';
+import 'package:texflow/providers/modelo_provider.dart';
 import 'package:texflow/providers/new_operation_page_provider.dart';
 import 'package:texflow/providers/operacao_provider.dart';
 import 'package:texflow/providers/usuario_provider.dart';
@@ -14,6 +18,10 @@ void main() {
         ChangeNotifierProvider(create: (_) => UsuarioProvider()),
         ChangeNotifierProvider(create: (_) => OperacaoProvider()),
         ChangeNotifierProvider(create: (_) => NewOperationPageProvider()),
+        ChangeNotifierProvider(create: (_) => EtapaProvider()),
+        ChangeNotifierProvider(create: (_) => FuncionarioProvider()),
+        ChangeNotifierProvider(create: (_) => ModeloProvider()),
+        ChangeNotifierProvider(create: (_) => FechamentoProvider()),
       ],
       child: const MyApp(),
     ),

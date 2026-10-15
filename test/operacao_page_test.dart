@@ -15,6 +15,8 @@ Operacao _operacao() {
       'nomeFantasia': 'Moda João',
     },
     'dataEntrega': '2026-10-15',
+    'valorPeca': 5.5,
+    'quantidadeSolicitada': 120,
     'gradePedido': [
       {'descricao': 'P', 'quantidade': 60},
       {'descricao': 'M', 'quantidade': 40},
@@ -32,7 +34,12 @@ Operacao _operacao() {
           'nomeFantasia': 'Cortex Ltda.',
         },
       },
-      {'descricao': 'Costura', 'status': 'emAndamento'},
+      {
+        'descricao': 'Costura',
+        'status': 'emAndamento',
+        'valorComissao': 0.3,
+        'funcionario': {'id': 1, 'nome': 'João Costureiro'},
+      },
     ],
     'status': 'emAndamento',
   });
@@ -59,6 +66,13 @@ class FakeDetalheProvider extends OperacaoDetalheProvider {
 
   @override
   String? get erro => _mensagemErro;
+
+  final List<int> finalizacoes = [];
+
+  @override
+  Future<void> finalizar(int quantidadeProduzida) async {
+    finalizacoes.add(quantidadeProduzida);
+  }
 }
 
 Future<void> _abrir(WidgetTester tester, FakeDetalheProvider provider) async {
@@ -94,7 +108,9 @@ void main() {
     expect(find.text('Corte'), findsOneWidget);
     expect(find.text('Cortex Ltda.'), findsOneWidget);
     expect(find.text('Costura'), findsOneWidget);
-    expect(find.text('Sem empresa responsável'), findsOneWidget);
+    expect(find.text('João Costureiro · R\$ 0,30 por peça'), findsOneWidget);
+    expect(find.text('Valor da peça: R\$ 5,50'), findsOneWidget);
+    expect(find.text('Solicitadas: 120 peças'), findsOneWidget);
     expect(find.text('Concluído'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -111,5 +127,41 @@ void main() {
 
     expect(find.text('Sem conexão'), findsOneWidget);
     expect(find.text('Tentar de novo'), findsOneWidget);
+  });
+
+  testWidgets('finalizar produção pede a quantidade produzida', (tester) async {
+    final provider = FakeDetalheProvider(operacao: _operacao());
+    await _abrir(tester, provider);
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Finalizar produção'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).last, '');
+    await tester.tap(find.text('Finalizar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Informe uma quantidade maior que zero'), findsOneWidget);
+    expect(provider.finalizacoes, isEmpty);
+
+    await tester.enterText(find.byType(TextField).last, '110');
+    await tester.tap(find.text('Finalizar'));
+    await tester.pumpAndSettle();
+
+    expect(provider.finalizacoes, [110]);
+    expect(find.text('Produção finalizada'), findsOneWidget);
+  });
+
+  testWidgets('produção já finalizada mostra o resumo e sem botão', (
+    tester,
+  ) async {
+    final operacao = _operacao()
+      ..dataFinalizacao = '2026-10-20'
+      ..quantidadeProduzida = 110;
+    await _abrir(tester, FakeDetalheProvider(operacao: operacao));
+
+    expect(
+      find.text('Finalizada em 20/10/2026 · 110 peças produzidas'),
+      findsOneWidget,
+    );
+    expect(find.text('Finalizar produção'), findsNothing);
   });
 }

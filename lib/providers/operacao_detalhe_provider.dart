@@ -42,6 +42,17 @@ class OperacaoDetalheProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> finalizar(int quantidadeProduzida) async {
+    final operacao = _operacao;
+    if (operacao == null) return;
+
+    _operacao = await OperacaoService.finalizar(
+      operacaoId: operacao.id,
+      quantidadeProduzida: quantidadeProduzida,
+    );
+    notifyListeners();
+  }
+
   Future<void> recarregar() async {
     if (_id == null) return;
     await carregar(_id!);

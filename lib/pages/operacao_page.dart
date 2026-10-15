@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:texflow/models/operacao.dart';
+import 'package:texflow/models/status.dart';
 import 'package:texflow/providers/operacao_detalhe_provider.dart';
 import 'package:texflow/routes/app_routes.dart';
 import 'package:texflow/shared/app_colors.dart';
 import 'package:texflow/shared/app_error_message.dart';
+import 'package:texflow/shared/app_primary_button.dart';
 import 'package:texflow/shared/application_app_bar.dart';
+import 'package:texflow/shared/finalizar_producao_dialog.dart';
 import 'package:texflow/shared/grade_table.dart';
 import 'package:texflow/shared/operation_header.dart';
 import 'package:texflow/shared/operation_progress_card.dart';
@@ -16,6 +19,30 @@ class OperacaoPage extends StatelessWidget {
   const OperacaoPage({super.key});
 
   static const route = AppRoutes.operacaoDetalhes;
+
+  Future<void> _finalizar(
+    BuildContext context,
+    OperacaoDetalheProvider provider,
+    Operacao operacao,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final quantidade = await pedirQuantidadeProduzida(
+      context,
+      sugestao: operacao.quantidadeSolicitada,
+    );
+    if (quantidade == null) return;
+
+    try {
+      await provider.finalizar(quantidade);
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Produção finalizada')),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +67,10 @@ class OperacaoPage extends StatelessWidget {
 
           return RefreshIndicator(
             onRefresh: provider.recarregar,
-            child: _Conteudo(operacao: operacao),
+            child: _Conteudo(
+              operacao: operacao,
+              aoFinalizar: () => _finalizar(context, provider, operacao),
+            ),
           );
         },
       ),
@@ -51,7 +81,9 @@ class OperacaoPage extends StatelessWidget {
 class _Conteudo extends StatelessWidget {
   final Operacao operacao;
 
-  const _Conteudo({required this.operacao});
+  final VoidCallback aoFinalizar;
+
+  const _Conteudo({required this.operacao, required this.aoFinalizar});
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +105,10 @@ class _Conteudo extends StatelessWidget {
           ),
         for (final processo in operacao.processos)
           ProcessTile(processo: processo),
+        if (!operacao.finalizada && operacao.status != Status.cancelado) ...[
+          const SizedBox(height: 12),
+          AppPrimaryButton(label: 'Finalizar produção', onPressed: aoFinalizar),
+        ],
       ],
     );
   }

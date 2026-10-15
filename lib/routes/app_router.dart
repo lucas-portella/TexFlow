@@ -2,8 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:texflow/pages/alterar_senha_page.dart';
 import 'package:texflow/pages/cadastro_usuario_page.dart';
+import 'package:texflow/models/referencia.dart';
 import 'package:texflow/pages/dashboard_page.dart';
+import 'package:texflow/pages/etapas_page.dart';
+import 'package:texflow/pages/fechamento_page.dart';
+import 'package:texflow/pages/funcionarios_page.dart';
 import 'package:texflow/pages/login_page.dart';
+import 'package:texflow/pages/modelo_form_page.dart';
+import 'package:texflow/pages/modelos_page.dart';
 import 'package:texflow/pages/new_order_page.dart';
 import 'package:texflow/pages/operacao_page.dart';
 import 'package:texflow/pages/search_page.dart';
@@ -23,6 +29,14 @@ class AppRouter {
     AppRoutes.configuracoes: (context) => const SettingsPage(),
     AppRoutes.novoPedido: (context) => const NovoPedidoPage(),
     AppRoutes.novaEmpresa: (context) => const CadastroEmpresaPage(),
+    AppRoutes.modelos: (context) => const ModelosPage(),
+    AppRoutes.modeloForm: (context) {
+      final modelo = ModalRoute.of(context)?.settings.arguments as Referencia?;
+      return ModeloFormPage(modelo: modelo);
+    },
+    AppRoutes.etapas: (context) => const EtapasPage(),
+    AppRoutes.funcionarios: (context) => const FuncionariosPage(),
+    AppRoutes.fechamento: (context) => const FechamentoPage(),
     AppRoutes.operacaoDetalhes: (context) {
       final id = ModalRoute.of(context)!.settings.arguments as int;
       return ChangeNotifierProvider(

@@ -62,8 +62,35 @@ class OperationHeader extends StatelessWidget {
               ),
             ],
           ),
+          for (final linha in _linhasDeProducao)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                linha,
+                style: const TextStyle(fontSize: 13, color: AppColors.muted),
+              ),
+            ),
         ],
       ),
     );
+  }
+
+  List<String> get _linhasDeProducao {
+    final linhas = <String>[];
+
+    if (operacao.valorPeca != null) {
+      linhas.add('Valor da peça: ${formatarMoeda(operacao.valorPeca!)}');
+    }
+    if (operacao.quantidadeSolicitada != null) {
+      linhas.add('Solicitadas: ${operacao.quantidadeSolicitada} peças');
+    }
+    if (operacao.finalizada) {
+      linhas.add(
+        'Finalizada em ${formatarData(operacao.dataFinalizacao)}'
+        ' · ${operacao.quantidadeProduzida} peças produzidas',
+      );
+    }
+
+    return linhas;
   }
 }
