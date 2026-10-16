@@ -50,9 +50,7 @@ class SettingsPageUserCard extends StatelessWidget {
                 ),
               ),
               Text(
-                usuario.tipo == UserType.GESTOR
-                    ? 'Supervisor(a) de produção'
-                    : 'Operador',
+                usuario.descricaoDoPerfil,
                 style: TextStyle(fontFamily: 'DM Sans', color: AppColors.grey),
               ),
             ],

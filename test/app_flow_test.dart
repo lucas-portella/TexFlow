@@ -4,7 +4,17 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:texflow/main.dart';
 import 'package:texflow/models/operacao.dart';
+import 'package:texflow/models/modulo.dart';
 import 'package:texflow/models/usuario.dart';
+import 'package:texflow/pages/clientes_page.dart';
+import 'package:texflow/providers/atalhos_provider.dart';
+import 'package:texflow/providers/cliente_provider.dart';
+import 'package:texflow/providers/funcionario_provider.dart';
+import 'package:texflow/providers/admin_provider.dart';
+import 'package:texflow/providers/minha_empresa_provider.dart';
+import 'package:texflow/providers/modelo_provider.dart';
+import 'package:texflow/providers/preferencias_provider.dart';
+import 'package:texflow/providers/new_operation_page_provider.dart';
 import 'package:texflow/providers/operacao_provider.dart';
 import 'package:texflow/providers/usuario_provider.dart';
 
@@ -41,6 +51,7 @@ class FakeUsuarioProvider extends UsuarioProvider {
     email: 'ana@texflow.com',
     senha: '',
     tipo: UserType.GESTOR,
+    modulos: Modulo.values.toSet(),
   );
   int logouts = 0;
 
@@ -104,6 +115,14 @@ Future<(FakeUsuarioProvider, FakeOperacaoProvider)> _abrirApp(
       providers: [
         ChangeNotifierProvider<UsuarioProvider>.value(value: usuario),
         ChangeNotifierProvider<OperacaoProvider>.value(value: operacao),
+        ChangeNotifierProvider(create: (_) => AtalhosProvider()),
+        ChangeNotifierProvider(create: (_) => NewOperationPageProvider()),
+        ChangeNotifierProvider(create: (_) => ModeloProvider()),
+        ChangeNotifierProvider(create: (_) => FuncionarioProvider()),
+        ChangeNotifierProvider(create: (_) => ClienteProvider()),
+        ChangeNotifierProvider(create: (_) => PreferenciasProvider()),
+        ChangeNotifierProvider(create: (_) => MinhaEmpresaProvider()),
+        ChangeNotifierProvider(create: (_) => AdminProvider()),
       ],
       child: const MyApp(),
     ),
@@ -152,16 +171,18 @@ void main() {
     expect(operacoes.carregamentos, 1);
     expect(find.text('Ana Carvalho'), findsOneWidget);
     expect(find.text('Moda João'), findsOneWidget);
-    expect(find.text('Baby Chic'), findsOneWidget);
+    expect(find.text('Baby Chic'), findsNothing);
     expect(find.text('Em produção'), findsWidgets);
-    expect(find.text('PRODUÇÕES ATIVAS'), findsOneWidget);
+    expect(find.text('EM ANDAMENTO'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('dashboard: sair volta para o login', (tester) async {
     final (usuarios, _) = await _abrirApp(tester);
 
-    await tester.tap(find.byIcon(Icons.logout));
+    await tester.tap(find.byTooltip('Menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Sair'));
     await tester.pumpAndSettle();
 
     expect(usuarios.logouts, 1);
@@ -179,7 +200,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Baby Chic'), findsOneWidget);
     expect(find.text('Moda João'), findsNothing);
-    expect(find.text('RESULTADOS'), findsOneWidget);
+    expect(find.text('1 produção'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), 'nada');
     await tester.pumpAndSettle();
@@ -187,7 +208,7 @@ void main() {
 
     await tester.tap(find.text('Início'));
     await tester.pumpAndSettle();
-    expect(find.text('PRODUÇÕES ATIVAS'), findsOneWidget);
+    expect(find.text('EM ANDAMENTO'), findsOneWidget);
 
     await tester.tap(find.text('Config.'));
     await tester.pumpAndSettle();
@@ -201,9 +222,9 @@ void main() {
     await tester.tap(find.byIcon(Icons.chevron_left));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Empresa'));
+    await tester.tap(find.text('Clientes'));
     await tester.pumpAndSettle();
-    expect(find.text('Tela em desenvolvimento'), findsOneWidget);
+    expect(find.byType(ClientesPage), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -223,6 +244,6 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.chevron_left));
     await tester.pumpAndSettle();
-    expect(find.text('RECENTES'), findsOneWidget);
+    expect(find.text('Pesquisar'), findsOneWidget);
   });
 }

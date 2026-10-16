@@ -52,7 +52,7 @@ class _CadastroEmpresaPageState extends State<CadastroEmpresaPage> {
 
       if (!mounted) return;
       messenger.showSnackBar(
-        const SnackBar(content: Text('Empresa cadastrada com sucesso')),
+        const SnackBar(content: Text('Cliente cadastrado com sucesso')),
       );
       Navigator.pop(context);
     } catch (e) {
@@ -68,7 +68,7 @@ class _CadastroEmpresaPageState extends State<CadastroEmpresaPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.screenBackground,
-      appBar: const ApplicationAppBar(title: 'Cadastrar Empresa'),
+      appBar: const ApplicationAppBar(title: 'Cadastrar cliente'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -82,14 +82,14 @@ class _CadastroEmpresaPageState extends State<CadastroEmpresaPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   spacing: 16,
                   children: [
-                    const SectionTitle(texto: 'DADOS DA EMPRESA'),
+                    const SectionTitle(texto: 'DADOS DO CLIENTE'),
                     AppTextField(
-                      label: 'NOME DA EMPRESA',
+                      label: 'NOME DO CLIENTE',
                       hintText: 'Ex.: Alfa Costuras Ltda.',
                       prefixIcon: Icons.business_center_outlined,
                       controller: _nomeController,
                       validator: (valor) =>
-                          validarObrigatorio(valor, 'Digite o nome da empresa'),
+                          validarObrigatorio(valor, 'Digite o nome do cliente'),
                     ),
                     AppTextField(
                       label: 'CNPJ',
@@ -133,7 +133,7 @@ class _CadastroEmpresaPageState extends State<CadastroEmpresaPage> {
                 ),
               ),
               AppPrimaryButton(
-                label: 'Cadastrar empresa',
+                label: 'Cadastrar cliente',
                 carregando: _carregando,
                 onPressed: _cadastrar,
               ),

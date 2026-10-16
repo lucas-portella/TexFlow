@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:texflow/models/modulo.dart';
+import 'package:texflow/providers/preferencias_provider.dart';
 import 'package:texflow/providers/usuario_provider.dart';
 import 'package:texflow/routes/app_routes.dart';
 import 'package:texflow/shared/app_colors.dart';
@@ -28,12 +30,14 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final usuarioLogado = context.watch<UsuarioProvider>();
+
     return Scaffold(
-      appBar: ApplicationAppBar(title: 'Configurações'),
-      body: Container(
-        margin: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        color: AppColors.lightBackground,
-        child: SafeArea(
+      backgroundColor: AppColors.lightBackground,
+      appBar: const ApplicationAppBar(title: 'Configurações'),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
           child: Column(
             spacing: 20,
             children: [
@@ -42,6 +46,46 @@ class SettingsPage extends StatelessWidget {
                   final usuario = usuarioProvider.usuario;
                   if (usuario == null) return const SizedBox.shrink();
                   return SettingsPageUserCard(usuario: usuario);
+                },
+              ),
+              if (usuarioLogado.donoDaEmpresa)
+                SettingsPageCard(
+                  title: 'EMPRESA',
+                  buttons: [
+                    SettingsPageButton(
+                      title: 'Minha empresa',
+                      subtitle:
+                          'Nome, CNPJ, contato e endereço da sua empresa.',
+                      onTap: () =>
+                          Navigator.pushNamed(context, AppRoutes.minhaEmpresa),
+                    ),
+                  ],
+                ),
+              Consumer<PreferenciasProvider>(
+                builder: (context, preferencias, child) {
+                  return SettingsPageCard(
+                    title: 'PREFERÊNCIAS',
+                    buttons: [
+                      if (usuarioLogado.usuario?.temModulo(
+                            Modulo.modoOperacao,
+                          ) ??
+                          false)
+                        SettingsPageButton(
+                          title: 'Modo de operação',
+                          subtitle: preferencias.modoOperacao.rotulo,
+                          onTap: () => Navigator.pushNamed(
+                            context,
+                            AppRoutes.modoOperacao,
+                          ),
+                        ),
+                      SettingsPageButton(
+                        title: 'Atalhos da tela inicial',
+                        subtitle: 'Escolha os 4 atalhos da barra de baixo.',
+                        onTap: () =>
+                            Navigator.pushNamed(context, AppRoutes.atalhos),
+                      ),
+                    ],
+                  );
                 },
               ),
               SettingsPageCard(
@@ -53,12 +97,15 @@ class SettingsPage extends StatelessWidget {
                     onTap: () =>
                         Navigator.pushNamed(context, AppRoutes.alterarSenha),
                   ),
-                  SettingsPageButton(
-                    title: 'Cadastrar usuário',
-                    subtitle: 'Cadastrar um novo operador ou supervisor',
-                    onTap: () =>
-                        Navigator.pushNamed(context, AppRoutes.novoUsuario),
-                  ),
+                  if (usuarioLogado.usuario?.temModulo(Modulo.usuarios) ??
+                      false)
+                    SettingsPageButton(
+                      title: 'Usuários',
+                      subtitle:
+                          'Cadastrar usuários e definir o que cada um acessa',
+                      onTap: () =>
+                          Navigator.pushNamed(context, AppRoutes.usuarios),
+                    ),
                 ],
               ),
               SettingsPageCard(

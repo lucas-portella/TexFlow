@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:texflow/models/empresa.dart';
 import 'package:texflow/models/item_grade.dart';
 import 'package:texflow/models/processo_produtivo.dart';
+import 'package:texflow/providers/funcionario_provider.dart';
+import 'package:texflow/providers/modelo_provider.dart';
 import 'package:texflow/providers/new_operation_page_provider.dart';
 import 'package:texflow/shared/app_colors.dart';
+import 'package:texflow/shared/adicionar_etapa_sheet.dart';
+import 'package:texflow/shared/comissao_etapa_dialog.dart';
+import 'package:texflow/shared/formatters.dart';
+import 'package:texflow/shared/selecionar_cliente_sheet.dart';
 
 const navy = Color(0xFF252A5C);
 const roxo = Color(0xFF5B4FC9);
@@ -20,28 +26,20 @@ class NovoPedidoPage extends StatefulWidget {
   State<NovoPedidoPage> createState() => _NovoPedidoPageState();
 }
 
-class _Processo {
-  final nome = TextEditingController();
-  final empresa = TextEditingController();
-
-  _Processo([String n = '']) {
-    nome.text = n;
-  }
-}
-
 class _NovoPedidoPageState extends State<NovoPedidoPage> {
-  final empresa = TextEditingController();
   final data = TextEditingController();
-  final tamanhos = ['PP', 'P', 'M', 'G', 'GG'];
-  final grade = {'PP': 0, 'P': 0, 'M': 0, 'G': 0, 'GG': 0};
-  final processos = [_Processo('Corte'), _Processo('Costura')];
+  final numeroController = TextEditingController();
+  final valorPeca = TextEditingController();
+  final quantidade = TextEditingController();
 
-  int get total => grade.values.fold(0, (a, b) => a + b);
-
-  void alterar(String t, int d) {
-    final v = grade[t]! + d;
-    if (v < 0) return;
-    setState(() => grade[t] = v);
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<NewOperationPageProvider>().limpar();
+      context.read<ModeloProvider>().carregar();
+      context.read<FuncionarioProvider>().carregar();
+    });
   }
 
   Future<void> escolherData(BuildContext context) async {
@@ -53,7 +51,7 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
       lastDate: DateTime(hoje.year + 5),
     );
 
-    if (d == null) return;
+    if (d == null || !context.mounted) return;
     final controller = context.read<NewOperationPageProvider>();
 
     controller.updateDataEntrega(d);
@@ -61,24 +59,30 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
         '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
   }
 
-  void adicionarProcesso() => setState(() => processos.add(_Processo()));
+  Future<void> criarPedido() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final controller = context.read<NewOperationPageProvider>();
 
-  void removerProcesso(int i) => setState(() => processos.removeAt(i));
-
-  void criarPedido() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Pedido criado com $total peças')));
+    try {
+      await controller.criarPedido();
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Pedido criado com sucesso')),
+      );
+      navigator.pop(true);
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
   }
 
   @override
   void dispose() {
-    empresa.dispose();
     data.dispose();
-    for (final p in processos) {
-      p.nome.dispose();
-      p.empresa.dispose();
-    }
+    numeroController.dispose();
+    valorPeca.dispose();
+    quantidade.dispose();
     super.dispose();
   }
 
@@ -97,27 +101,36 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
                     children: [
                       cartaoCliente(),
                       const SizedBox(height: 16),
-                      cartaoGrade(),
+                      cartaoProducao(),
                       const SizedBox(height: 16),
-                      cartaoProcessos(),
+                      cartaoGrade(),
                       const SizedBox(height: 16),
                       SizedBox(
                         height: 52,
                         child: FilledButton(
-                          onPressed: controller.criarPedido,
+                          onPressed: controller.salvando ? null : criarPedido,
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.mainBlue,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-                          child: const Text(
-                            'Criar pedido',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                          child: controller.salvando
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text(
+                                  'Criar pedido',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                         ),
                       ),
                     ],
@@ -229,77 +242,25 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
   Widget cartaoCliente() {
     return Consumer<NewOperationPageProvider>(
       builder: (context, controller, child) {
-        bool clienteSelecionado = controller.cliente != null;
-        if (clienteSelecionado) {
-          return cartao([
-            titulo('CLIENTE'),
-            rotulo('EMPRESA CLIENTE'),
-            GestureDetector(
-              onTap: () {
-                ModalSelecionarEmpresa(
-                  context,
-                  controller.listarEmpresas(),
-                  controller.setCliente,
-                );
-              },
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.business_center_outlined),
-                    SizedBox(width: 12),
-                    Text(controller.cliente!.nomeFantasia),
-                  ],
-                ),
-              ),
-            ),
-            rotulo('DATA DE ENTREGA'),
-            TextField(
-              controller: data,
-              readOnly: true,
-              onTap: () => escolherData(context),
-              decoration: decoracao(
-                'DD/MM/AAAA',
-                icone: Icons.calendar_today_outlined,
-              ),
-            ),
-            const SizedBox(height: 4),
-          ]);
-        }
+        final cliente = controller.cliente;
 
         return cartao([
           titulo('CLIENTE'),
-          rotulo('EMPRESA CLIENTE'),
-          TextButton(
-            onPressed: () {
-              ModalSelecionarEmpresa(
+          rotulo('CLIENTE'),
+          campoSelecao(
+            icone: Icons.business_center_outlined,
+            texto: cliente?.nomeFantasia,
+            detalhe: cliente?.cnpj,
+            vazio: 'Selecione o cliente',
+            aoTocar: () async {
+              final escolhido = await SelecionarClienteSheet.abrir(
                 context,
-                controller.listarEmpresas(),
-                controller.setCliente,
+                carregar: controller.listarEmpresas,
               );
+              if (escolhido != null) controller.setCliente(escolhido);
             },
-            child: Container(
-              padding: EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: roxo,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              width: double.infinity,
-              child: Center(
-                child: Text(
-                  'Selecione cliente',
-                  style: TextStyle(color: Colors.white, fontFamily: 'DM Sans'),
-                ),
-              ),
-            ),
           ),
-          rotulo('DATA DE ENTREGA'),
+          rotulo('PREVISÃO DE ENTREGA'),
           TextField(
             controller: data,
             readOnly: true,
@@ -311,79 +272,6 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
           ),
           const SizedBox(height: 4),
         ]);
-      },
-    );
-  }
-
-  Future<dynamic> ModalSelecionarEmpresa(
-    BuildContext context,
-    Future<List<Empresa>>? futureBuilder,
-    void Function(Empresa) setFunction,
-  ) {
-    return showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return FutureBuilder<List<Empresa>>(
-          future: futureBuilder,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (snapshot.hasError) {
-              return const Center(child: Text('Erro ao carregar empresas'));
-            }
-
-            final empresas = snapshot.data ?? [];
-
-            return Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: const Icon(Icons.business, color: navy),
-                  ),
-                  const Text(
-                    'Selecione uma empresa:',
-                    style: TextStyle(
-                      fontFamily: 'DM Sans',
-                      color: navy,
-                      fontSize: 18,
-                    ),
-                  ),
-
-                  for (final empresa in empresas)
-                    TextButton(
-                      onPressed: () {
-                        setFunction(empresa);
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        width: double.infinity,
-                        margin: EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: roxo,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Center(
-                          child: Text(
-                            empresa.nomeFantasia,
-                            style: const TextStyle(
-                              fontFamily: 'DM Sans',
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            );
-          },
-        );
       },
     );
   }
@@ -479,62 +367,262 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
     );
   }
 
-  Widget itemProcesso(ProcessoProdutivo processo) {
+  Future<void> escolherModelo(BuildContext context) {
+    return showModalBottomSheet(
+      context: context,
+      builder: (sheetContext) {
+        return Consumer<ModeloProvider>(
+          builder: (_, provider, child) {
+            if (provider.carregando && provider.modelos.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.all(32),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            if (provider.ativos.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.all(32),
+                child: Text(
+                  'Nenhum modelo ativo. Cadastre ou ative no menu Modelos.',
+                  textAlign: TextAlign.center,
+                ),
+              );
+            }
+
+            return ListView(
+              shrinkWrap: true,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              children: [
+                for (final modelo in provider.ativos)
+                  ListTile(
+                    title: Text(modelo.nome),
+                    subtitle: Text('${modelo.etapas.length} etapas'),
+                    onTap: () {
+                      context.read<NewOperationPageProvider>().setModelo(
+                        modelo,
+                      );
+                      Navigator.pop(sheetContext);
+                    },
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> escolherResponsavel(
+    BuildContext context,
+    ProcessoProdutivo processo,
+  ) {
+    return showModalBottomSheet(
+      context: context,
+      builder: (sheetContext) {
+        return Consumer<FuncionarioProvider>(
+          builder: (_, provider, child) {
+            if (provider.carregando && provider.funcionarios.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.all(32),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            if (provider.ativos.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.all(32),
+                child: Text(
+                  'Nenhum funcionário ativo. Cadastre no menu Funcionários.',
+                  textAlign: TextAlign.center,
+                ),
+              );
+            }
+
+            return ListView(
+              shrinkWrap: true,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 4, 24, 8),
+                  child: Text(
+                    'Responsável pela etapa ${processo.descricao}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                for (final funcionario in provider.ativos)
+                  ListTile(
+                    leading: const Icon(Icons.person_outline),
+                    title: Text(funcionario.nome),
+                    subtitle: funcionario.cargo == null
+                        ? null
+                        : Text(funcionario.cargo!),
+                    onTap: () {
+                      context.read<NewOperationPageProvider>().setResponsavel(
+                        processo,
+                        funcionario,
+                      );
+                      Navigator.pop(sheetContext);
+                    },
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> alterarValor(
+    BuildContext context,
+    ProcessoProdutivo processo,
+  ) async {
+    final controller = context.read<NewOperationPageProvider>();
+
+    final novoValor = await pedirComissaoDaEtapa(
+      context,
+      etapa: processo.descricao,
+      valorAtual: processo.valorComissao ?? 0,
+    );
+
+    if (novoValor != null) {
+      controller.alterarValorEtapa(processo, novoValor);
+    }
+  }
+
+  Widget cartaoProducao() {
     return Consumer<NewOperationPageProvider>(
       builder: (context, controller, child) {
-        bool selecionouEmpresa = processo.empresaResponsavel != null;
-        Widget mostradorEmpresa;
-        if (selecionouEmpresa) {
-          mostradorEmpresa = GestureDetector(
-            onTap: () {
-              ModalSelecionarEmpresa(context, controller.listarEmpresas(), (
-                empresa,
-              ) {
-                controller.updateEmpresaProcessoProdutivo(processo, empresa);
-              });
-            },
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.business_center_outlined),
-                  SizedBox(width: 12),
-                  Text(processo.empresaResponsavel!.nomeFantasia),
-                ],
-              ),
+        final modelo = controller.modelo;
+
+        return cartao([
+          titulo('PRODUÇÃO'),
+          rotulo('NÚMERO DO PEDIDO'),
+          TextField(
+            controller: numeroController,
+            onChanged: controller.setNumero,
+            decoration: decoracao('Ex.: 4521', icone: Icons.tag),
+          ),
+          rotulo('VALOR DA PEÇA (R\$)'),
+          TextField(
+            controller: valorPeca,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onChanged: (valor) => controller.setValorPeca(lerValor(valor)),
+            decoration: decoracao('0,00', icone: Icons.attach_money),
+          ),
+          rotulo('QUANTIDADE SOLICITADA'),
+          TextField(
+            controller: quantidade,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onChanged: (valor) =>
+                controller.setQuantidadeSolicitada(int.tryParse(valor)),
+            decoration: decoracao(
+              'Ex.: 1000',
+              icone: Icons.inventory_2_outlined,
             ),
-          );
-        } else {
-          mostradorEmpresa = TextButton(
-            onPressed: () {
-              ModalSelecionarEmpresa(context, controller.listarEmpresas(), (
-                empresa,
-              ) {
-                controller.updateEmpresaProcessoProdutivo(processo, empresa);
-              });
-            },
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: roxo,
+          ),
+          rotulo('MODELO'),
+          campoSelecao(
+            icone: Icons.checkroom_outlined,
+            texto: modelo?.nome,
+            vazio: 'Selecione o modelo',
+            aoTocar: () => escolherModelo(context),
+          ),
+          if (modelo == null)
+            const Padding(
+              padding: EdgeInsets.only(top: 12),
+              child: Text(
+                'Ao escolher o modelo, as etapas aparecem aqui.',
+                style: TextStyle(color: cinza, fontSize: 13),
               ),
-              child: Center(
-                child: Text(
-                  'Selecionar empresa responsável',
-                  style: TextStyle(fontFamily: 'DM Sans', color: Colors.white),
+            )
+          else ...[
+            rotulo('ETAPAS'),
+            for (final processo in controller.processos) itemProcesso(processo),
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: () => AdicionarEtapaSheet.abrir(
+                    context,
+                    descricoesExistentes: controller.processos
+                        .map((processo) => processo.descricao)
+                        .toList(),
+                    aoConfirmar: controller.adicionarEtapaAoPedido,
+                  ),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Adicionar etapa'),
                 ),
               ),
             ),
-          );
-        }
+          ],
+        ]);
+      },
+    );
+  }
+
+  Widget campoSelecao({
+    required IconData icone,
+    required String? texto,
+    required String vazio,
+    required VoidCallback aoTocar,
+    String? detalhe,
+  }) {
+    return InkWell(
+      onTap: aoTocar,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: borda),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(icone, size: 18, color: cinza),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    texto ?? vazio,
+                    style: TextStyle(
+                      fontWeight: texto == null
+                          ? FontWeight.w400
+                          : FontWeight.w600,
+                      color: texto == null
+                          ? const Color(0xFFB0B0B8)
+                          : Colors.black,
+                    ),
+                  ),
+                  if (detalhe != null)
+                    Text(
+                      detalhe,
+                      style: const TextStyle(fontSize: 12, color: cinza),
+                    ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_drop_down, color: cinza),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget itemProcesso(ProcessoProdutivo processo) {
+    return Consumer<NewOperationPageProvider>(
+      builder: (context, controller, child) {
+        final funcionario = processo.funcionario;
 
         return Container(
           margin: const EdgeInsets.only(top: 12),
@@ -544,74 +632,88 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
             borderRadius: BorderRadius.circular(14),
           ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Processo',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF5E5E68),
-                    ),
-                  ),
-                  InkWell(
-                    onTap: () => controller.deletarProcessoProdutivo(processo),
-                    child: const Icon(
-                      Icons.delete_outline,
-                      size: 18,
-                      color: vermelho,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                onChanged: (value) {
-                  controller.updateDescricaoProcessoProdutivo(processo, value);
-                },
-                controller: TextEditingController(text: processo.descricao),
-                decoration: decoracao(processo.descricao),
-              ),
-              const SizedBox(height: 8),
-              mostradorEmpresa,
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget cartaoProcessos() {
-    return Consumer<NewOperationPageProvider>(
-      builder: (context, controller, child) {
-        return cartao([
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              titulo('PROCESSOS PRODUTIVOS'),
-              InkWell(
-                onTap: controller.criarProcessoProdutivo,
-                child: const Row(
-                  children: [
-                    Icon(Icons.add, size: 16, color: roxo),
-                    SizedBox(width: 2),
-                    Text(
-                      'Adicionar',
-                      style: TextStyle(
-                        color: roxo,
-                        fontSize: 13,
+                  Expanded(
+                    child: Text(
+                      processo.descricao,
+                      style: const TextStyle(
+                        fontSize: 14,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                  ],
+                  ),
+                  Text(
+                    '${formatarMoeda(processo.valorComissao ?? 0)} por peça',
+                    style: const TextStyle(
+                      color: roxo,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () => alterarValor(context, processo),
+                    borderRadius: BorderRadius.circular(10),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(Icons.edit_outlined, size: 16, color: roxo),
+                    ),
+                  ),
+                  if (controller.ehEtapaExtra(processo))
+                    InkWell(
+                      onTap: () => controller.removerEtapaExtra(processo),
+                      borderRadius: BorderRadius.circular(10),
+                      child: const Tooltip(
+                        message: 'Remover etapa',
+                        child: Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Icon(Icons.close, size: 16, color: Colors.red),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              GestureDetector(
+                onTap: () => escolherResponsavel(context, processo),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: funcionario == null ? roxo : Colors.white,
+                    border: funcionario == null
+                        ? null
+                        : Border.all(color: borda),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.person_outline,
+                        size: 18,
+                        color: funcionario == null ? Colors.white : cinza,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          funcionario?.nome ?? 'Selecionar responsável',
+                          style: TextStyle(
+                            color: funcionario == null
+                                ? Colors.white
+                                : Colors.black,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
-          for (final i in controller.processos) itemProcesso(i),
-        ]);
+        );
       },
     );
   }

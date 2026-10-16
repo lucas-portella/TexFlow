@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:texflow/models/operacao.dart';
 import 'package:texflow/routes/app_routes.dart';
 import 'package:texflow/shared/app_colors.dart';
+import 'package:texflow/shared/formatters.dart';
 import 'package:texflow/shared/status_badge.dart';
 import 'package:texflow/shared/status_helpers.dart';
 
@@ -13,8 +14,8 @@ class ProductionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title = operacao.cliente?.nomeFantasia ?? 'Cliente não informado';
-    final date = operacao.dataEntrega ?? '';
-    final pieces = '${operacao.totalPedido} peças';
+    final date = operacao.dataFinalizacao ?? operacao.dataEntrega ?? '';
+    final pieces = '${operacao.pecas} peças';
     final ref = operacao.referencia != null
         ? 'Ref. ${operacao.referencia!.nome}'
         : '';
@@ -59,10 +60,10 @@ class ProductionCard extends StatelessWidget {
                 operacao.codigo,
                 style: const TextStyle(fontSize: 13, color: Colors.grey),
               ),
-              if (date.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  if (date.isNotEmpty) ...[
                     const Icon(
                       Icons.calendar_today_outlined,
                       size: 14,
@@ -70,19 +71,19 @@ class ProductionCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      date,
+                      formatarData(date),
                       style: const TextStyle(fontSize: 13, color: Colors.grey),
                     ),
                     const SizedBox(width: 6),
                     const Text('·', style: TextStyle(color: Colors.grey)),
                     const SizedBox(width: 6),
-                    Text(
-                      pieces,
-                      style: const TextStyle(fontSize: 13, color: Colors.grey),
-                    ),
                   ],
-                ),
-              ],
+                  Text(
+                    pieces,
+                    style: const TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                ],
+              ),
               if (progress != null) ...[
                 const SizedBox(height: 10),
                 ClipRRect(
