@@ -79,12 +79,13 @@ void main() {
 
     test('valida os campos na ordem e exige o responsável de cada etapa', () {
       final provider = NewOperationPageProvider();
+      expect(provider.validar(), 'Informe o número do pedido');
+
+      provider.setNumero('4521');
       expect(provider.validar(), 'Selecione o cliente');
 
       provider.setCliente(Empresa(id: 1, cnpj: '1', nomeFantasia: 'Moda João'));
-      expect(provider.validar(), 'Informe a data de entrega');
 
-      provider.updateDataEntrega(DateTime(2026, 10, 30));
       expect(provider.validar(), 'Selecione o modelo');
 
       provider.setModelo(_blusa());
@@ -156,7 +157,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Selecione um modelo para ver as etapas.'),
+      find.text('Ao escolher o modelo, as etapas aparecem aqui.'),
       findsOneWidget,
     );
 

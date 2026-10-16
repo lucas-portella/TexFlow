@@ -1,20 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:texflow/models/empresa.dart';
+import 'package:texflow/models/etapa.dart';
 import 'package:texflow/models/funcionario.dart';
 import 'package:texflow/models/item_grade.dart';
 import 'package:texflow/models/processo_produtivo.dart';
 import 'package:texflow/models/referencia.dart';
 import 'package:texflow/models/status.dart';
 import 'package:texflow/services/empresa_service.dart';
+import 'package:texflow/services/etapa_service.dart';
+import 'package:texflow/shared/adicionar_etapa_sheet.dart';
 import 'package:texflow/services/operacao_service.dart';
 
 class NewOperationPageProvider extends ChangeNotifier {
+  final Future<List<Etapa>> Function() _listarEtapas;
+  final Future<Etapa> Function(String nome, double valor) _cadastrarEtapa;
+
+  NewOperationPageProvider({
+    Future<List<Etapa>> Function()? listarEtapas,
+    Future<Etapa> Function(String nome, double valor)? cadastrarEtapa,
+  }) : _listarEtapas = listarEtapas ?? EtapaService.listar,
+       _cadastrarEtapa =
+           cadastrarEtapa ??
+           ((nome, valor) =>
+               EtapaService.salvar(nome: nome, valorComissao: valor));
+
+  String numero = '';
   Empresa? cliente;
   Referencia? modelo;
   double? valorPeca;
   int? quantidadeSolicitada;
   DateTime? dataEntrega;
   List<ProcessoProdutivo> processos = [];
+  final Set<ProcessoProdutivo> _extras = {};
   bool salvando = false;
   List<ItemGrade> gradePedido = _gradeVazia();
 
@@ -29,14 +46,20 @@ class NewOperationPageProvider extends ChangeNotifier {
   }
 
   void limpar() {
+    numero = '';
     cliente = null;
     modelo = null;
     valorPeca = null;
     quantidadeSolicitada = null;
     dataEntrega = null;
     processos = [];
+    _extras.clear();
     gradePedido = _gradeVazia();
     notifyListeners();
+  }
+
+  void setNumero(String valor) {
+    numero = valor;
   }
 
   void setCliente(Empresa empresa) {
@@ -59,6 +82,7 @@ class NewOperationPageProvider extends ChangeNotifier {
 
   void setModelo(Referencia novoModelo) {
     modelo = novoModelo;
+    _extras.clear();
     processos = novoModelo.etapas
         .map(
           (etapa) => ProcessoProdutivo(
@@ -68,6 +92,47 @@ class NewOperationPageProvider extends ChangeNotifier {
           ),
         )
         .toList();
+    notifyListeners();
+  }
+
+  Future<void> adicionarEtapaAoPedido(DadosDaEtapaAdicionada dados) async {
+    String descricao = dados.descricao.trim();
+    final repetida = processos.any(
+      (processo) =>
+          processo.descricao.trim().toLowerCase() == descricao.toLowerCase(),
+    );
+    if (repetida) {
+      throw Exception('Esse pedido já tem a etapa $descricao');
+    }
+
+    if (dados.ehNova) {
+      final cadastradas = await _listarEtapas();
+      Etapa? existente;
+      for (final etapa in cadastradas) {
+        if (etapa.nome.trim().toLowerCase() == descricao.toLowerCase()) {
+          existente = etapa;
+        }
+      }
+      final etapa = existente ?? await _cadastrarEtapa(descricao, dados.valor);
+      descricao = etapa.nome;
+    }
+
+    final adicionada = ProcessoProdutivo(
+      descricao: descricao,
+      valorComissao: dados.valor,
+      funcionario: dados.funcionario,
+      status: Status.naoIniciado,
+    );
+    _extras.add(adicionada);
+    processos = [...processos, adicionada];
+    notifyListeners();
+  }
+
+  bool ehEtapaExtra(ProcessoProdutivo processo) => _extras.contains(processo);
+
+  void removerEtapaExtra(ProcessoProdutivo processo) {
+    if (!_extras.remove(processo)) return;
+    processos = processos.where((item) => item != processo).toList();
     notifyListeners();
   }
 
@@ -96,8 +161,8 @@ class NewOperationPageProvider extends ChangeNotifier {
   }
 
   String? validar() {
+    if (numero.trim().isEmpty) return 'Informe o número do pedido';
     if (cliente == null) return 'Selecione o cliente';
-    if (dataEntrega == null) return 'Informe a data de entrega';
     if (modelo == null) return 'Selecione o modelo';
     if (valorPeca == null || valorPeca! <= 0) {
       return 'Informe o valor da peça';
@@ -121,12 +186,14 @@ class NewOperationPageProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final data = dataEntrega!;
+      final data = dataEntrega;
       await OperacaoService.criar(
         clienteId: cliente!.id,
         referenciaId: modelo!.id,
-        dataEntrega:
-            '${data.year}-${data.month.toString().padLeft(2, '0')}-${data.day.toString().padLeft(2, '0')}',
+        numero: numero.trim(),
+        dataEntrega: data == null
+            ? null
+            : '${data.year}-${data.month.toString().padLeft(2, '0')}-${data.day.toString().padLeft(2, '0')}',
         valorPeca: valorPeca!,
         quantidadeSolicitada: quantidadeSolicitada!,
         gradePedido: gradePedido

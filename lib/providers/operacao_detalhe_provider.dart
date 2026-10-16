@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:texflow/models/operacao.dart';
+import 'package:texflow/models/status.dart';
 import 'package:texflow/services/operacao_service.dart';
 
 class OperacaoDetalheProvider extends ChangeNotifier {
@@ -42,13 +43,56 @@ class OperacaoDetalheProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> finalizar(int quantidadeProduzida) async {
+  Future<void> alterarStatus(Status status) async {
+    final operacao = _operacao;
+    if (operacao == null) return;
+
+    _operacao = await OperacaoService.alterarStatus(
+      operacaoId: operacao.id,
+      status: status,
+    );
+    notifyListeners();
+  }
+
+  Future<void> atualizarEtapas(List<int> processoIds, Status status) async {
+    final operacao = _operacao;
+    if (operacao == null || processoIds.isEmpty) return;
+
+    _operacao = await OperacaoService.atualizarStatusDasEtapas(
+      operacaoId: operacao.id,
+      processoIds: processoIds,
+      status: status,
+    );
+    notifyListeners();
+  }
+
+  Future<void> adicionarEtapa({
+    int? etapaId,
+    String? nome,
+    required double valorComissao,
+    required int funcionarioId,
+  }) async {
+    final operacao = _operacao;
+    if (operacao == null) return;
+
+    _operacao = await OperacaoService.adicionarEtapa(
+      operacaoId: operacao.id,
+      etapaId: etapaId,
+      nome: nome,
+      valorComissao: valorComissao,
+      funcionarioId: funcionarioId,
+    );
+    notifyListeners();
+  }
+
+  Future<void> finalizar(int quantidadeProduzida, DateTime dataEntrega) async {
     final operacao = _operacao;
     if (operacao == null) return;
 
     _operacao = await OperacaoService.finalizar(
       operacaoId: operacao.id,
       quantidadeProduzida: quantidadeProduzida,
+      dataEntrega: dataEntrega,
     );
     notifyListeners();
   }

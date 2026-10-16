@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:http/http.dart' as http;
+import 'package:texflow/services/api_client.dart' as http;
 import 'package:texflow/models/referencia.dart';
 import 'package:texflow/services/api_config.dart';
 import 'package:texflow/services/api_helper.dart';

@@ -63,6 +63,9 @@ class AppTextField extends StatefulWidget {
   final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
   final String? Function(String?)? validator;
+  final bool enabled;
+  final bool readOnly;
+  final VoidCallback? onTap;
 
   const AppTextField({
     super.key,
@@ -74,6 +77,9 @@ class AppTextField extends StatefulWidget {
     this.keyboardType,
     this.inputFormatters,
     this.validator,
+    this.enabled = true,
+    this.readOnly = false,
+    this.onTap,
   });
 
   @override
@@ -88,28 +94,37 @@ class _AppTextFieldState extends State<AppTextField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AppFieldLabel(widget.label),
-        TextFormField(
-          controller: widget.controller,
-          obscureText: _escondido,
-          keyboardType: widget.keyboardType,
-          inputFormatters: widget.inputFormatters,
-          validator: widget.validator,
-          style: const TextStyle(fontSize: 14, color: AppColors.black),
-          decoration: appFieldDecoration(
-            hintText: widget.hintText,
-            prefixIcon: widget.prefixIcon,
-            suffixIcon: widget.obscureText
-                ? IconButton(
-                    onPressed: () => setState(() => _escondido = !_escondido),
-                    icon: Icon(
-                      _escondido
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                      color: AppColors.textMuted,
-                    ),
-                  )
-                : null,
+        Opacity(
+          opacity: widget.enabled ? 1 : 0.5,
+          child: AppFieldLabel(widget.label),
+        ),
+        Opacity(
+          opacity: widget.enabled ? 1 : 0.5,
+          child: TextFormField(
+            controller: widget.controller,
+            obscureText: _escondido,
+            enabled: widget.enabled,
+            readOnly: widget.readOnly,
+            onTap: widget.onTap,
+            keyboardType: widget.keyboardType,
+            inputFormatters: widget.inputFormatters,
+            validator: widget.validator,
+            style: const TextStyle(fontSize: 14, color: AppColors.black),
+            decoration: appFieldDecoration(
+              hintText: widget.hintText,
+              prefixIcon: widget.prefixIcon,
+              suffixIcon: widget.obscureText
+                  ? IconButton(
+                      onPressed: () => setState(() => _escondido = !_escondido),
+                      icon: Icon(
+                        _escondido
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: AppColors.textMuted,
+                      ),
+                    )
+                  : null,
+            ),
           ),
         ),
       ],

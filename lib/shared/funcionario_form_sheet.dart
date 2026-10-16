@@ -28,12 +28,16 @@ class _FuncionarioFormSheetState extends State<FuncionarioFormSheet> {
   late final _nomeController = TextEditingController(
     text: widget.funcionario?.nome,
   );
+  late final _cargoController = TextEditingController(
+    text: widget.funcionario?.cargo,
+  );
   late bool _ativo = widget.funcionario?.ativo ?? true;
   bool _carregando = false;
 
   @override
   void dispose() {
     _nomeController.dispose();
+    _cargoController.dispose();
     super.dispose();
   }
 
@@ -50,6 +54,9 @@ class _FuncionarioFormSheetState extends State<FuncionarioFormSheet> {
       await provider.salvar(
         id: widget.funcionario?.id,
         nome: _nomeController.text.trim(),
+        cargo: _cargoController.text.trim().isEmpty
+            ? null
+            : _cargoController.text.trim(),
         ativo: _ativo,
       );
       navigator.pop();
@@ -91,6 +98,12 @@ class _FuncionarioFormSheetState extends State<FuncionarioFormSheet> {
               controller: _nomeController,
               validator: (valor) =>
                   validarObrigatorio(valor, 'Informe o nome do funcionário'),
+            ),
+            AppTextField(
+              label: 'CARGO',
+              hintText: 'Ex.: Costureira',
+              prefixIcon: Icons.work_outline,
+              controller: _cargoController,
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,

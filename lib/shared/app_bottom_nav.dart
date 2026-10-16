@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:texflow/models/atalho_rapido.dart';
+import 'package:texflow/providers/atalhos_provider.dart';
+import 'package:texflow/providers/usuario_provider.dart';
 import 'package:texflow/routes/app_routes.dart';
 import 'package:texflow/shared/app_colors.dart';
 
@@ -20,37 +24,31 @@ class AppBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final atalhos = AtalhoRapido.visiveisPara(
+      context.watch<AtalhosProvider>().atalhos,
+      context.watch<UsuarioProvider?>()?.usuario,
+    );
+    final esquerda = atalhos.take(2).toList();
+    final direita = atalhos.skip(2).toList();
+
+    Widget item(AtalhoRapido atalho) {
+      return _NavItem(
+        icon: atalho.icone,
+        label: atalho.rotulo,
+        active: current == atalho.rota,
+        onTap: () => _abrir(context, atalho.rota),
+      );
+    }
+
     return BottomAppBar(
       shape: const CircularNotchedRectangle(),
       notchMargin: 8,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _NavItem(
-            icon: Icons.home_filled,
-            label: 'Início',
-            active: current == AppRoutes.dashboard,
-            onTap: () => _abrir(context, AppRoutes.dashboard),
-          ),
-          _NavItem(
-            icon: Icons.search,
-            label: 'Pesquisa',
-            active: current == AppRoutes.pesquisa,
-            onTap: () => _abrir(context, AppRoutes.pesquisa),
-          ),
+          for (final atalho in esquerda) item(atalho),
           const SizedBox(width: 40),
-          _NavItem(
-            icon: Icons.settings_outlined,
-            label: 'Config.',
-            active: current == AppRoutes.configuracoes,
-            onTap: () => _abrir(context, AppRoutes.configuracoes),
-          ),
-          _NavItem(
-            icon: Icons.business_outlined,
-            label: 'Empresa',
-            active: current == AppRoutes.novaEmpresa,
-            onTap: () => _abrir(context, AppRoutes.novaEmpresa),
-          ),
+          for (final atalho in direita) item(atalho),
         ],
       ),
     );

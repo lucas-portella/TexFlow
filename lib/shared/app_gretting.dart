@@ -14,13 +14,24 @@ class AppGretting extends StatelessWidget {
   final VoidCallback? onLogout;
   final VoidCallback? onMenu;
 
+  ButtonStyle get _estiloBotao => IconButton.styleFrom(
+    backgroundColor: AppColors.white,
+    fixedSize: const Size(44, 44),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+      side: BorderSide(color: AppColors.grey.withValues(alpha: 0.25)),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     return Row(
+      spacing: 16,
       children: [
         if (onMenu != null)
           IconButton(
             tooltip: 'Menu',
+            style: _estiloBotao,
             onPressed: onMenu,
             icon: const Icon(Icons.menu, color: AppColors.ink),
           ),
@@ -34,6 +45,8 @@ class AppGretting extends StatelessWidget {
               ),
               Text(
                 usuario?.nome ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -44,6 +57,8 @@ class AppGretting extends StatelessWidget {
         ),
         if (onLogout != null)
           IconButton(
+            tooltip: 'Sair',
+            style: _estiloBotao,
             onPressed: onLogout,
             icon: const Icon(Icons.logout, color: AppColors.grey),
           ),

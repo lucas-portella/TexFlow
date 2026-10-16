@@ -41,3 +41,16 @@ String nomeDoMes(DateTime mes) {
   ];
   return '${nomes[mes.month - 1]} de ${mes.year}';
 }
+
+String formatarNumero(double valor, {int casas = 1}) {
+  final negativo = valor < 0;
+  final partes = valor.abs().toStringAsFixed(casas).split('.');
+  final inteiro = partes[0].replaceAllMapped(
+    RegExp(r'\B(?=(\d{3})+(?!\d))'),
+    (match) => '.',
+  );
+  final decimal = partes.length > 1 ? ',${partes[1]}' : '';
+  return '${negativo ? '-' : ''}$inteiro$decimal';
+}
+
+String formatarInteiro(double valor) => formatarNumero(valor, casas: 0);

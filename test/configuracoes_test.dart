@@ -2,11 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:texflow/models/modulo.dart';
 import 'package:texflow/models/usuario.dart';
 import 'package:texflow/pages/settings_page.dart';
+import 'package:texflow/providers/preferencias_provider.dart';
 import 'package:texflow/providers/usuario_provider.dart';
+import 'package:texflow/providers/usuarios_provider.dart';
 import 'package:texflow/routes/app_router.dart';
 import 'package:texflow/routes/app_routes.dart';
+
+class FakeUsuariosProvider extends UsuariosProvider {
+  @override
+  Future<void> carregar() async {}
+}
 
 class FakeUsuarioProvider extends UsuarioProvider {
   Usuario? _logado = Usuario(
@@ -15,6 +23,7 @@ class FakeUsuarioProvider extends UsuarioProvider {
     email: 'ana@texflow.com',
     senha: '',
     tipo: UserType.GESTOR,
+    modulos: Modulo.values.toSet(),
   );
   final List<List<String>> trocas = [];
   int logouts = 0;
@@ -48,8 +57,14 @@ Future<FakeUsuarioProvider> _abrirConfiguracoes(WidgetTester tester) async {
   final usuario = FakeUsuarioProvider();
 
   await tester.pumpWidget(
-    ChangeNotifierProvider<UsuarioProvider>.value(
-      value: usuario,
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<UsuarioProvider>.value(value: usuario),
+        ChangeNotifierProvider(create: (_) => PreferenciasProvider()),
+        ChangeNotifierProvider<UsuariosProvider>.value(
+          value: FakeUsuariosProvider(),
+        ),
+      ],
       child: MaterialApp(
         routes: {
           ...AppRouter.routes,
@@ -69,7 +84,7 @@ void main() {
 
     expect(find.text('Ana Carvalho'), findsOneWidget);
     expect(find.text('Alterar senha'), findsOneWidget);
-    expect(find.text('Cadastrar usuário'), findsOneWidget);
+    expect(find.text('Usuários'), findsOneWidget);
   });
 
   testWidgets('configurações: sair volta para o login', (tester) async {
@@ -115,7 +130,7 @@ void main() {
       ['Antiga@1', 'Nova@123'],
     ]);
     expect(find.text('Senha alterada com sucesso'), findsOneWidget);
-    expect(find.text('Cadastrar usuário'), findsOneWidget);
+    expect(find.text('Usuários'), findsOneWidget);
   });
 
   testWidgets('cadastrar usuário: valida os campos e mostra o perfil', (
@@ -123,7 +138,9 @@ void main() {
   ) async {
     await _abrirConfiguracoes(tester);
 
-    await tester.tap(find.text('Cadastrar usuário'));
+    await tester.tap(find.text('Usuários'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
 
     expect(find.text('Operador'), findsOneWidget);

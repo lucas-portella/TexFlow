@@ -114,6 +114,10 @@ class _Conteudo extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _CartaoRepasse(fechamento: fechamento),
+          if (fechamento.custosIncluidos) ...[
+            const SizedBox(height: 12),
+            _CartaoCustos(fechamento: fechamento),
+          ],
           const SizedBox(height: 12),
           FechamentoResumoCard(
             rotulo: 'Lucro da empresa',
@@ -197,6 +201,63 @@ class _ListaRepasses extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _CartaoCustos extends StatefulWidget {
+  final Fechamento fechamento;
+
+  const _CartaoCustos({required this.fechamento});
+
+  @override
+  State<_CartaoCustos> createState() => _CartaoCustosState();
+}
+
+class _CartaoCustosState extends State<_CartaoCustos> {
+  bool _aberto = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final categorias = widget.fechamento.custosPorCategoria;
+
+    return FechamentoResumoCard(
+      rotulo: 'Custos do mês',
+      valor: formatarMoeda(widget.fechamento.totalCustos),
+      cor: AppColors.danger,
+      aberto: _aberto,
+      onTap: () => setState(() => _aberto = !_aberto),
+      conteudo: categorias.isEmpty
+          ? const Padding(
+              padding: EdgeInsets.only(top: 12),
+              child: Text(
+                'Nenhum custo neste mês',
+                style: TextStyle(color: AppColors.muted),
+              ),
+            )
+          : Column(
+              children: [
+                for (final item in categorias)
+                  Material(
+                    color: Colors.transparent,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        item.categoria.icone,
+                        color: AppColors.muted,
+                      ),
+                      title: Text(
+                        item.categoria.rotulo,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      trailing: Text(
+                        formatarMoeda(item.total),
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
     );
   }
 }

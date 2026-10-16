@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:http/http.dart' as http;
+import 'package:texflow/services/api_client.dart' as http;
 import 'package:texflow/models/funcionario.dart';
 import 'package:texflow/services/api_config.dart';
 import 'package:texflow/services/api_helper.dart';
@@ -25,10 +25,11 @@ class FuncionarioService {
     int? id,
     required String nome,
     required bool ativo,
+    String? cargo,
   }) async {
     final url =
         '${ApiConfig.baseUrl}/api/funcionarios${id == null ? '' : '/$id'}';
-    final corpo = jsonEncode({'nome': nome, 'ativo': ativo});
+    final corpo = jsonEncode({'nome': nome, 'cargo': cargo, 'ativo': ativo});
 
     final response = id == null
         ? await http.post(Uri.parse(url), headers: cabecalhosJson, body: corpo)

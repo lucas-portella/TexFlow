@@ -1,4 +1,4 @@
-import 'package:http/http.dart' as http;
+import 'package:texflow/services/api_client.dart' as http;
 import 'package:texflow/models/fechamento.dart';
 import 'package:texflow/services/api_config.dart';
 import 'package:texflow/services/api_helper.dart';

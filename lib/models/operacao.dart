@@ -6,6 +6,7 @@ import 'package:texflow/models/status.dart';
 
 class Operacao {
   int id;
+  String? numero;
   Referencia? referencia;
   Empresa? cliente;
   String? dataEntrega;
@@ -20,6 +21,7 @@ class Operacao {
 
   Operacao({
     required this.id,
+    this.numero,
     this.referencia,
     this.cliente,
     this.dataEntrega,
@@ -36,6 +38,7 @@ class Operacao {
   factory Operacao.fromMap(Map<String, dynamic> map) {
     return Operacao(
       id: map['id'] ?? 0,
+      numero: map['numero'],
       referencia: map['referencia'] != null
           ? Referencia.fromMap(map['referencia'])
           : null,
@@ -58,9 +61,18 @@ class Operacao {
     );
   }
 
-  String get codigo => 'OP-$id';
+  String get codigo =>
+      'OP-${numero != null && numero!.isNotEmpty ? numero : id}';
+
+  int get pecas => quantidadeProduzida ?? quantidadeSolicitada ?? totalPedido;
 
   bool get finalizada => dataFinalizacao != null;
+
+  bool get todasEtapasConcluidas => processos.every(
+    (processo) =>
+        processo.status == Status.concluido ||
+        processo.status == Status.cancelado,
+  );
 
   int get totalPedido =>
       gradePedido.fold(0, (soma, item) => soma + item.quantidade);
@@ -72,7 +84,8 @@ class Operacao {
       processos.where((processo) => processo.status == Status.concluido).length;
 
   double? get progresso {
-    if (totalPedido == 0) return null;
-    return totalFabricado / totalPedido;
+    if (totalPedido > 0) return totalFabricado / totalPedido;
+    if (processos.isEmpty) return null;
+    return processosConcluidos / processos.length;
   }
 }

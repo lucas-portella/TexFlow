@@ -35,8 +35,14 @@ class FuncionarioProvider extends ChangeNotifier {
     int? id,
     required String nome,
     required bool ativo,
+    String? cargo,
   }) async {
-    await FuncionarioService.salvar(id: id, nome: nome, ativo: ativo);
+    await FuncionarioService.salvar(
+      id: id,
+      nome: nome,
+      cargo: cargo,
+      ativo: ativo,
+    );
     await carregar();
   }
 

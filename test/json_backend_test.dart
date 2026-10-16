@@ -3,7 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:texflow/models/fechamento.dart';
 import 'package:texflow/models/operacao.dart';
+import 'package:texflow/models/modulo.dart';
 import 'package:texflow/models/usuario.dart';
+import 'package:texflow/models/minha_empresa.dart';
+import 'package:texflow/providers/minha_empresa_provider.dart';
 import 'package:texflow/providers/usuario_provider.dart';
 import 'package:texflow/routes/app_routes.dart';
 import 'package:texflow/shared/app_drawer.dart';
@@ -16,7 +19,17 @@ class FakeUsuarioProvider extends UsuarioProvider {
     email: 'ana@texflow.com',
     senha: '',
     tipo: UserType.GESTOR,
+    modulos: Modulo.values.toSet(),
   );
+}
+
+class FakeMinhaEmpresaProvider extends MinhaEmpresaProvider {
+  @override
+  MinhaEmpresa? get empresa =>
+      MinhaEmpresa(nomeFantasia: 'Confecções Alfa e Beta de Malhas Finas Ltda');
+
+  @override
+  Future<void> carregar() async {}
 }
 
 void main() {
@@ -105,8 +118,15 @@ void main() {
     final chave = GlobalKey<ScaffoldState>();
 
     await tester.pumpWidget(
-      ChangeNotifierProvider<UsuarioProvider>.value(
-        value: FakeUsuarioProvider(),
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<UsuarioProvider>.value(
+            value: FakeUsuarioProvider(),
+          ),
+          ChangeNotifierProvider<MinhaEmpresaProvider>.value(
+            value: FakeMinhaEmpresaProvider(),
+          ),
+        ],
         child: MaterialApp(
           onGenerateRoute: (settings) {
             aberturas.add(settings.name!);
@@ -131,6 +151,23 @@ void main() {
       ),
     );
 
+    await tester.tap(find.widgetWithText(ElevatedButton, 'menu'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Confecções Alfa e Beta de Malhas Finas Ltda'),
+      findsOneWidget,
+    );
+    expect(find.text('Ana Carvalho'), findsOneWidget);
+    expect(find.text('TexFlow'), findsOneWidget);
+    final marca = tester.getCenter(find.text('TexFlow'));
+    final nome = tester.getCenter(
+      find.text('Confecções Alfa e Beta de Malhas Finas Ltda'),
+    );
+    expect(marca.dy, greaterThan(nome.dy));
+    expect(tester.takeException(), isNull);
+    tester.state<NavigatorState>(find.byType(Navigator)).pop();
+    await tester.pumpAndSettle();
+
     for (final item in [
       ('Modelos', AppRoutes.modelos),
       ('Etapas', AppRoutes.etapas),
@@ -139,6 +176,14 @@ void main() {
     ]) {
       await tester.tap(find.widgetWithText(ElevatedButton, 'menu'));
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text(item.$1),
+        100,
+        scrollable: find.descendant(
+          of: find.byType(Drawer),
+          matching: find.byType(Scrollable),
+        ),
+      );
       await tester.tap(find.text(item.$1));
       await tester.pumpAndSettle();
       expect(aberturas.last, item.$2);

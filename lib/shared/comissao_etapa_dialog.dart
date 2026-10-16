@@ -53,8 +53,6 @@ class _ComissaoEtapaDialogState extends State<_ComissaoEtapaDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Vale só para esta produção. O modelo não é alterado.'),
-          const SizedBox(height: 16),
           TextField(
             controller: _controller,
             autofocus: true,

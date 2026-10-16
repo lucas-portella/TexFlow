@@ -1,3 +1,5 @@
+import 'package:texflow/models/custo.dart';
+
 class RepasseEtapa {
   String etapa;
   double valorPorPeca;
@@ -78,6 +80,9 @@ class Fechamento {
   double totalRecebido;
   double totalRepasse;
   double lucro;
+  bool custosIncluidos;
+  double totalCustos;
+  List<CustoCategoriaTotal> custosPorCategoria;
   List<RepasseFuncionario> repasses;
 
   Fechamento({
@@ -87,6 +92,9 @@ class Fechamento {
     required this.totalRecebido,
     required this.totalRepasse,
     required this.lucro,
+    this.custosIncluidos = false,
+    this.totalCustos = 0,
+    this.custosPorCategoria = const [],
     required this.repasses,
   });
 
@@ -98,6 +106,11 @@ class Fechamento {
       totalRecebido: (map['totalRecebido'] as num?)?.toDouble() ?? 0,
       totalRepasse: (map['totalRepasse'] as num?)?.toDouble() ?? 0,
       lucro: (map['lucro'] as num?)?.toDouble() ?? 0,
+      custosIncluidos: map['custosIncluidos'] ?? false,
+      totalCustos: (map['totalCustos'] as num?)?.toDouble() ?? 0,
+      custosPorCategoria: (map['custosPorCategoria'] as List<dynamic>? ?? [])
+          .map((item) => CustoCategoriaTotal.fromMap(item))
+          .toList(),
       repasses: (map['repasses'] as List<dynamic>? ?? [])
           .map((item) => RepasseFuncionario.fromMap(item))
           .toList(),

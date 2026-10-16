@@ -7,7 +7,7 @@ class CadastroItemTile extends StatelessWidget {
   final String? subtitulo;
   final Widget? selo;
   final VoidCallback onTap;
-  final VoidCallback onExcluir;
+  final VoidCallback? onExcluir;
 
   const CadastroItemTile({
     super.key,
@@ -15,7 +15,7 @@ class CadastroItemTile extends StatelessWidget {
     this.subtitulo,
     this.selo,
     required this.onTap,
-    required this.onExcluir,
+    this.onExcluir,
   });
 
   @override
@@ -61,15 +61,16 @@ class CadastroItemTile extends StatelessWidget {
                   ],
                 ),
               ),
-              IconButton(
-                tooltip: 'Excluir',
-                onPressed: onExcluir,
-                icon: const Icon(
-                  Icons.delete_outline,
-                  color: AppColors.danger,
-                  size: 20,
+              if (onExcluir != null)
+                IconButton(
+                  tooltip: 'Excluir',
+                  onPressed: onExcluir,
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: AppColors.danger,
+                    size: 20,
+                  ),
                 ),
-              ),
             ],
           ),
         ),

@@ -79,6 +79,7 @@ class _FuncionariosPageState extends State<FuncionariosPage> {
                 for (final funcionario in provider.funcionarios)
                   CadastroItemTile(
                     titulo: funcionario.nome,
+                    subtitulo: funcionario.cargo,
                     selo: funcionario.ativo
                         ? null
                         : const Text(

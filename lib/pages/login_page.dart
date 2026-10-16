@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:texflow/providers/admin_provider.dart';
 import 'package:texflow/providers/usuario_provider.dart';
 import 'package:texflow/routes/app_routes.dart';
 import 'package:texflow/services/auth_service.dart';
@@ -40,9 +41,23 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => _carregando = true);
 
+    final usuario = _emailController.text.trim();
+    final ehAdmin = !usuario.contains('@');
+
     try {
+      if (ehAdmin) {
+        await context.read<AdminProvider>().entrar(
+          usuario,
+          _senhaController.text.trim(),
+        );
+
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, AppRoutes.admin);
+        return;
+      }
+
       await context.read<UsuarioProvider>().login(
-        _emailController.text.trim(),
+        usuario,
         _senhaController.text,
       );
 

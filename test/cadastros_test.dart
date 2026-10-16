@@ -70,8 +70,9 @@ class FakeFuncionarioProvider extends FuncionarioProvider {
     int? id,
     required String nome,
     required bool ativo,
+    String? cargo,
   }) async {
-    salvos.add({'id': id, 'nome': nome, 'ativo': ativo});
+    salvos.add({'id': id, 'nome': nome, 'cargo': cargo, 'ativo': ativo});
   }
 }
 
@@ -262,12 +263,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Informe o nome do funcionário'), findsOneWidget);
 
-    await tester.enterText(find.byType(TextFormField), 'Ana Silva');
+    final campos = find.byType(TextFormField);
+    await tester.enterText(campos.at(0), 'Ana Silva');
+    await tester.enterText(campos.at(1), 'Costureira');
     await tester.tap(find.widgetWithText(ElevatedButton, 'Salvar'));
     await tester.pumpAndSettle();
 
     expect(funcionarios.salvos, [
-      {'id': null, 'nome': 'Ana Silva', 'ativo': true},
+      {'id': null, 'nome': 'Ana Silva', 'cargo': 'Costureira', 'ativo': true},
     ]);
   });
 

@@ -9,6 +9,7 @@ class AppDropdownField<T> extends StatelessWidget {
   final List<DropdownMenuItem<T>> items;
   final ValueChanged<T?> onChanged;
   final String? Function(T?)? validator;
+  final bool enabled;
 
   const AppDropdownField({
     super.key,
@@ -19,6 +20,7 @@ class AppDropdownField<T> extends StatelessWidget {
     required this.items,
     required this.onChanged,
     this.validator,
+    this.enabled = true,
   });
 
   @override
@@ -31,7 +33,7 @@ class AppDropdownField<T> extends StatelessWidget {
           initialValue: value,
           isExpanded: true,
           items: items,
-          onChanged: onChanged,
+          onChanged: enabled ? onChanged : null,
           validator: validator,
           style: const TextStyle(fontSize: 14, color: Colors.black),
           decoration: appFieldDecoration(

@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:texflow/models/empresa.dart';
 import 'package:texflow/models/item_grade.dart';
 import 'package:texflow/models/processo_produtivo.dart';
 import 'package:texflow/providers/funcionario_provider.dart';
 import 'package:texflow/providers/modelo_provider.dart';
 import 'package:texflow/providers/new_operation_page_provider.dart';
 import 'package:texflow/shared/app_colors.dart';
+import 'package:texflow/shared/adicionar_etapa_sheet.dart';
 import 'package:texflow/shared/comissao_etapa_dialog.dart';
 import 'package:texflow/shared/formatters.dart';
+import 'package:texflow/shared/selecionar_cliente_sheet.dart';
 
 const navy = Color(0xFF252A5C);
 const roxo = Color(0xFF5B4FC9);
@@ -27,6 +28,7 @@ class NovoPedidoPage extends StatefulWidget {
 
 class _NovoPedidoPageState extends State<NovoPedidoPage> {
   final data = TextEditingController();
+  final numeroController = TextEditingController();
   final valorPeca = TextEditingController();
   final quantidade = TextEditingController();
 
@@ -49,7 +51,7 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
       lastDate: DateTime(hoje.year + 5),
     );
 
-    if (d == null) return;
+    if (d == null || !context.mounted) return;
     final controller = context.read<NewOperationPageProvider>();
 
     controller.updateDataEntrega(d);
@@ -78,6 +80,7 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
   @override
   void dispose() {
     data.dispose();
+    numeroController.dispose();
     valorPeca.dispose();
     quantidade.dispose();
     super.dispose();
@@ -101,8 +104,6 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
                       cartaoProducao(),
                       const SizedBox(height: 16),
                       cartaoGrade(),
-                      const SizedBox(height: 16),
-                      cartaoProcessos(),
                       const SizedBox(height: 16),
                       SizedBox(
                         height: 52,
@@ -241,77 +242,25 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
   Widget cartaoCliente() {
     return Consumer<NewOperationPageProvider>(
       builder: (context, controller, child) {
-        bool clienteSelecionado = controller.cliente != null;
-        if (clienteSelecionado) {
-          return cartao([
-            titulo('CLIENTE'),
-            rotulo('EMPRESA CLIENTE'),
-            GestureDetector(
-              onTap: () {
-                ModalSelecionarEmpresa(
-                  context,
-                  controller.listarEmpresas(),
-                  controller.setCliente,
-                );
-              },
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.business_center_outlined),
-                    SizedBox(width: 12),
-                    Text(controller.cliente!.nomeFantasia),
-                  ],
-                ),
-              ),
-            ),
-            rotulo('DATA DE ENTREGA'),
-            TextField(
-              controller: data,
-              readOnly: true,
-              onTap: () => escolherData(context),
-              decoration: decoracao(
-                'DD/MM/AAAA',
-                icone: Icons.calendar_today_outlined,
-              ),
-            ),
-            const SizedBox(height: 4),
-          ]);
-        }
+        final cliente = controller.cliente;
 
         return cartao([
           titulo('CLIENTE'),
-          rotulo('EMPRESA CLIENTE'),
-          TextButton(
-            onPressed: () {
-              ModalSelecionarEmpresa(
+          rotulo('CLIENTE'),
+          campoSelecao(
+            icone: Icons.business_center_outlined,
+            texto: cliente?.nomeFantasia,
+            detalhe: cliente?.cnpj,
+            vazio: 'Selecione o cliente',
+            aoTocar: () async {
+              final escolhido = await SelecionarClienteSheet.abrir(
                 context,
-                controller.listarEmpresas(),
-                controller.setCliente,
+                carregar: controller.listarEmpresas,
               );
+              if (escolhido != null) controller.setCliente(escolhido);
             },
-            child: Container(
-              padding: EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: roxo,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              width: double.infinity,
-              child: Center(
-                child: Text(
-                  'Selecione cliente',
-                  style: TextStyle(color: Colors.white, fontFamily: 'DM Sans'),
-                ),
-              ),
-            ),
           ),
-          rotulo('DATA DE ENTREGA'),
+          rotulo('PREVISÃO DE ENTREGA'),
           TextField(
             controller: data,
             readOnly: true,
@@ -323,79 +272,6 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
           ),
           const SizedBox(height: 4),
         ]);
-      },
-    );
-  }
-
-  Future<dynamic> ModalSelecionarEmpresa(
-    BuildContext context,
-    Future<List<Empresa>>? futureBuilder,
-    void Function(Empresa) setFunction,
-  ) {
-    return showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return FutureBuilder<List<Empresa>>(
-          future: futureBuilder,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (snapshot.hasError) {
-              return const Center(child: Text('Erro ao carregar empresas'));
-            }
-
-            final empresas = snapshot.data ?? [];
-
-            return Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: const Icon(Icons.business, color: navy),
-                  ),
-                  const Text(
-                    'Selecione uma empresa:',
-                    style: TextStyle(
-                      fontFamily: 'DM Sans',
-                      color: navy,
-                      fontSize: 18,
-                    ),
-                  ),
-
-                  for (final empresa in empresas)
-                    TextButton(
-                      onPressed: () {
-                        setFunction(empresa);
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        width: double.infinity,
-                        margin: EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: roxo,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Center(
-                          child: Text(
-                            empresa.nomeFantasia,
-                            style: const TextStyle(
-                              fontFamily: 'DM Sans',
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            );
-          },
-        );
       },
     );
   }
@@ -581,6 +457,9 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
                   ListTile(
                     leading: const Icon(Icons.person_outline),
                     title: Text(funcionario.nome),
+                    subtitle: funcionario.cargo == null
+                        ? null
+                        : Text(funcionario.cargo!),
                     onTap: () {
                       context.read<NewOperationPageProvider>().setResponsavel(
                         processo,
@@ -621,35 +500,11 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
 
         return cartao([
           titulo('PRODUÇÃO'),
-          rotulo('MODELO'),
-          GestureDetector(
-            onTap: () => escolherModelo(context),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: borda),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.checkroom_outlined, size: 18, color: cinza),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      modelo?.nome ?? 'Selecione o modelo',
-                      style: TextStyle(
-                        color: modelo == null
-                            ? const Color(0xFFB0B0B8)
-                            : Colors.black,
-                      ),
-                    ),
-                  ),
-                  const Icon(Icons.arrow_drop_down, color: cinza),
-                ],
-              ),
-            ),
+          rotulo('NÚMERO DO PEDIDO'),
+          TextField(
+            controller: numeroController,
+            onChanged: controller.setNumero,
+            decoration: decoracao('Ex.: 4521', icone: Icons.tag),
           ),
           rotulo('VALOR DA PEÇA (R\$)'),
           TextField(
@@ -670,9 +525,97 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
               icone: Icons.inventory_2_outlined,
             ),
           ),
-          const SizedBox(height: 4),
+          rotulo('MODELO'),
+          campoSelecao(
+            icone: Icons.checkroom_outlined,
+            texto: modelo?.nome,
+            vazio: 'Selecione o modelo',
+            aoTocar: () => escolherModelo(context),
+          ),
+          if (modelo == null)
+            const Padding(
+              padding: EdgeInsets.only(top: 12),
+              child: Text(
+                'Ao escolher o modelo, as etapas aparecem aqui.',
+                style: TextStyle(color: cinza, fontSize: 13),
+              ),
+            )
+          else ...[
+            rotulo('ETAPAS'),
+            for (final processo in controller.processos) itemProcesso(processo),
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: () => AdicionarEtapaSheet.abrir(
+                    context,
+                    descricoesExistentes: controller.processos
+                        .map((processo) => processo.descricao)
+                        .toList(),
+                    aoConfirmar: controller.adicionarEtapaAoPedido,
+                  ),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Adicionar etapa'),
+                ),
+              ),
+            ),
+          ],
         ]);
       },
+    );
+  }
+
+  Widget campoSelecao({
+    required IconData icone,
+    required String? texto,
+    required String vazio,
+    required VoidCallback aoTocar,
+    String? detalhe,
+  }) {
+    return InkWell(
+      onTap: aoTocar,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: borda),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(icone, size: 18, color: cinza),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    texto ?? vazio,
+                    style: TextStyle(
+                      fontWeight: texto == null
+                          ? FontWeight.w400
+                          : FontWeight.w600,
+                      color: texto == null
+                          ? const Color(0xFFB0B0B8)
+                          : Colors.black,
+                    ),
+                  ),
+                  if (detalhe != null)
+                    Text(
+                      detalhe,
+                      style: const TextStyle(fontSize: 12, color: cinza),
+                    ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_drop_down, color: cinza),
+          ],
+        ),
+      ),
     );
   }
 
@@ -718,6 +661,18 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
                       child: Icon(Icons.edit_outlined, size: 16, color: roxo),
                     ),
                   ),
+                  if (controller.ehEtapaExtra(processo))
+                    InkWell(
+                      onTap: () => controller.removerEtapaExtra(processo),
+                      borderRadius: BorderRadius.circular(10),
+                      child: const Tooltip(
+                        message: 'Remover etapa',
+                        child: Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Icon(Icons.close, size: 16, color: Colors.red),
+                        ),
+                      ),
+                    ),
                 ],
               ),
               const SizedBox(height: 4),
@@ -759,25 +714,6 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
             ],
           ),
         );
-      },
-    );
-  }
-
-  Widget cartaoProcessos() {
-    return Consumer<NewOperationPageProvider>(
-      builder: (context, controller, child) {
-        return cartao([
-          titulo('ETAPAS DA PRODUÇÃO'),
-          if (controller.modelo == null)
-            const Padding(
-              padding: EdgeInsets.only(top: 12),
-              child: Text(
-                'Selecione um modelo para ver as etapas.',
-                style: TextStyle(color: cinza),
-              ),
-            ),
-          for (final processo in controller.processos) itemProcesso(processo),
-        ]);
       },
     );
   }
