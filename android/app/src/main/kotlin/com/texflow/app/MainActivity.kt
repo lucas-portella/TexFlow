@@ -1,4 +1,4 @@
-package com.example.texflow
+package com.texflow.app
 
 import io.flutter.embedding.android.FlutterActivity
 
