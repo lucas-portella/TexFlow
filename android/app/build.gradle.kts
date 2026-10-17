@@ -1,11 +1,19 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val chaveProperties = Properties()
+val chaveArquivo = rootProject.file("key.properties")
+if (chaveArquivo.exists()) {
+    chaveArquivo.inputStream().use { chaveProperties.load(it) }
+}
+
 android {
-    namespace = "com.example.texflow"
+    namespace = "com.texflow.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -15,21 +23,31 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.texflow"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        applicationId = "com.texflow.app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (chaveArquivo.exists()) {
+            create("release") {
+                keyAlias = chaveProperties.getProperty("keyAlias")
+                keyPassword = chaveProperties.getProperty("keyPassword")
+                storeFile = rootProject.file(chaveProperties.getProperty("storeFile"))
+                storePassword = chaveProperties.getProperty("storePassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (chaveArquivo.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }
