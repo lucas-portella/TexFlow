@@ -19,16 +19,4 @@ class AuthService {
 
     throw Exception(mensagemDeErro(response, 'Erro ao fazer login'));
   }
-
-  static Future<void> esqueciSenha(String email) async {
-    final response = await http.post(
-      Uri.parse('${ApiConfig.baseUrl}/api/auth/esqueci-senha'),
-      headers: cabecalhosJson,
-      body: jsonEncode({'email': email}),
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception(mensagemDeErro(response, 'Erro ao solicitar nova senha'));
-    }
-  }
 }

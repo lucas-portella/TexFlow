@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:texflow/models/usuario.dart';
 import 'package:texflow/routes/app_router.dart';
@@ -10,6 +11,11 @@ import 'package:texflow/services/auth_service.dart';
 import 'package:texflow/services/usuario_service.dart';
 
 class UsuarioProvider extends ChangeNotifier {
+  static const _chaveUsuario = 'usuario';
+  static const _chaveToken = 'token';
+
+  final _cofre = const FlutterSecureStorage();
+
   Usuario? _usuario;
 
   UsuarioProvider() {
@@ -30,33 +36,42 @@ class UsuarioProvider extends ChangeNotifier {
     _usuario = usuario;
     notifyListeners();
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('usuario', jsonEncode(usuario.toMap()));
+    await _guardar(usuario);
   }
 
   Future<void> carregarUsuarioSalvo() async {
     final prefs = await SharedPreferences.getInstance();
-    final dados = prefs.getString('usuario');
+    final dados = prefs.getString(_chaveUsuario);
 
     if (dados == null) return;
 
     final salvo = Usuario.fromMap(jsonDecode(dados));
-    if (salvo.token == null || salvo.token!.isEmpty) {
-      await prefs.remove('usuario');
+    final token = await _cofre.read(key: _chaveToken) ?? salvo.token;
+    if (token == null || token.isEmpty) {
+      await _esquecer();
       return;
     }
 
+    salvo.token = token;
     _usuario = salvo;
-    Sessao.token = salvo.token;
+    Sessao.token = token;
     notifyListeners();
+
+    if (_tokenAindaNasPreferencias(prefs)) await _guardar(salvo);
   }
 
   Future<void> alterarSenha(String senhaAtual, String novaSenha) async {
-    await UsuarioService.alterarSenha(
+    final tokenNovo = await UsuarioService.alterarSenha(
       usuarioId: _usuario!.idUsuario,
       senhaAtual: senhaAtual,
       novaSenha: novaSenha,
     );
+
+    if (tokenNovo == null || tokenNovo.isEmpty) return;
+
+    _usuario!.token = tokenNovo;
+    Sessao.token = tokenNovo;
+    await _guardar(_usuario!);
   }
 
   Future<void> atualizarPerfil() async {
@@ -69,8 +84,7 @@ class UsuarioProvider extends ChangeNotifier {
       _usuario = recebido;
       notifyListeners();
 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('usuario', jsonEncode(recebido.toMap()));
+      await _guardar(recebido);
     } catch (_) {
       return;
     }
@@ -81,8 +95,7 @@ class UsuarioProvider extends ChangeNotifier {
     _usuario = null;
     notifyListeners();
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('usuario');
+    await _esquecer();
   }
 
   Future<void> _sessaoExpirou() async {
@@ -91,5 +104,25 @@ class UsuarioProvider extends ChangeNotifier {
       AppRoutes.login,
       (route) => false,
     );
+  }
+
+  Future<void> _guardar(Usuario usuario) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _chaveUsuario,
+      jsonEncode(usuario.toMap()..remove('token')),
+    );
+    await _cofre.write(key: _chaveToken, value: usuario.token ?? '');
+  }
+
+  Future<void> _esquecer() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_chaveUsuario);
+    await _cofre.delete(key: _chaveToken);
+  }
+
+  bool _tokenAindaNasPreferencias(SharedPreferences prefs) {
+    final dados = prefs.getString(_chaveUsuario);
+    return dados != null && jsonDecode(dados)['token'] != null;
   }
 }

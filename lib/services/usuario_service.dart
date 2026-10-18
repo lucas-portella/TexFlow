@@ -99,7 +99,7 @@ class UsuarioService {
     return Usuario.fromMap(decodificar(response));
   }
 
-  static Future<void> alterarSenha({
+  static Future<String?> alterarSenha({
     required int usuarioId,
     required String senhaAtual,
     required String novaSenha,
@@ -113,5 +113,7 @@ class UsuarioService {
     if (response.statusCode != 200) {
       throw Exception(mensagemDeErro(response, 'Erro ao alterar a senha'));
     }
+
+    return decodificar(response)['token'] as String?;
   }
 }
