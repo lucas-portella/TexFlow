@@ -132,7 +132,7 @@ Future<(FakeUsuarioProvider, FakeOperacaoProvider)> _abrirApp(
 }
 
 void main() {
-  testWidgets('login: valida campos e esqueci minha senha, sem cadastro', (
+  testWidgets('login: valida campos, sem cadastro e sem recuperar senha', (
     tester,
   ) async {
     await _abrirApp(tester, logado: false);
@@ -144,12 +144,7 @@ void main() {
     expect(find.text('Informe seu e-mail'), findsOneWidget);
     expect(find.text('Informe sua senha'), findsOneWidget);
 
-    await tester.tap(find.text('Esqueci minha senha'));
-    await tester.pumpAndSettle();
-    expect(find.text('Digite seu e-mail cadastrado'), findsOneWidget);
-    await tester.tap(find.text('Cancelar'));
-    await tester.pumpAndSettle();
-
+    expect(find.text('Esqueci minha senha'), findsNothing);
     expect(find.text('Cadastrar'), findsNothing);
     expect(tester.takeException(), isNull);
   });

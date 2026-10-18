@@ -3,12 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:texflow/providers/admin_provider.dart';
 import 'package:texflow/providers/usuario_provider.dart';
 import 'package:texflow/routes/app_routes.dart';
-import 'package:texflow/services/auth_service.dart';
 import 'package:texflow/shared/app_colors.dart';
 import 'package:texflow/shared/app_info.dart';
 import 'package:texflow/shared/app_primary_button.dart';
 import 'package:texflow/shared/app_text_field.dart';
-import 'package:texflow/shared/app_text_link.dart';
 import 'package:texflow/shared/login_page_logo.dart';
 import 'package:texflow/shared/validators.dart';
 
@@ -72,53 +70,6 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<void> _esqueciSenha() async {
-    final messenger = ScaffoldMessenger.of(context);
-    final emailController = TextEditingController(text: _emailController.text);
-
-    final email = await showDialog<String>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Esqueci minha senha'),
-          content: TextField(
-            controller: emailController,
-            keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(
-              labelText: 'Digite seu e-mail cadastrado',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, emailController.text),
-              child: const Text('Enviar'),
-            ),
-          ],
-        );
-      },
-    );
-    emailController.dispose();
-
-    if (email == null || email.trim().isEmpty) return;
-
-    try {
-      await AuthService.esqueciSenha(email.trim());
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Se o e-mail existir, enviamos uma nova senha'),
-        ),
-      );
-    } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -155,10 +106,6 @@ class _LoginPageState extends State<LoginPage> {
                         obscureText: true,
                         validator: (valor) =>
                             validarObrigatorio(valor, 'Informe sua senha'),
-                      ),
-                      AppTextLink(
-                        texto: 'Esqueci minha senha',
-                        onTap: _esqueciSenha,
                       ),
                       const SizedBox(height: 8),
                       AppPrimaryButton(
