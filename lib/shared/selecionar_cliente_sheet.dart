@@ -109,17 +109,17 @@ class _SelecionarClienteSheetState extends State<SelecionarClienteSheet> {
                         children: [
                           Text(
                             _busca.isEmpty
-                                ? 'Nenhum cliente cadastrado'
+                                ? 'Não há clientes cadastrados'
                                 : 'Nenhum cliente encontrado',
                           ),
                           if (_busca.isEmpty)
                             TextButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                                Navigator.pushNamed(
+                              onPressed: () async {
+                                await Navigator.pushNamed(
                                   context,
                                   AppRoutes.novaEmpresa,
                                 );
+                                if (mounted) _recarregar();
                               },
                               child: const Text('Cadastrar cliente'),
                             ),

@@ -3,7 +3,9 @@ import 'package:texflow/shared/app_colors.dart';
 
 class ApplicationAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
-  const ApplicationAppBar({super.key, required this.title});
+  final List<Widget>? actions;
+
+  const ApplicationAppBar({super.key, required this.title, this.actions});
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -31,6 +33,7 @@ class ApplicationAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
       ),
+      actions: actions,
       title: Text(
         title,
         style: TextStyle(

@@ -66,6 +66,7 @@ class UsuarioService {
     required String email,
     String? cargo,
     UserType? tipo,
+    String? novaSenha,
   }) async {
     final response = await http.put(
       Uri.parse('${ApiConfig.baseUrl}/api/usuarios/$id'),
@@ -75,6 +76,7 @@ class UsuarioService {
         'email': email,
         'cargo': cargo ?? '',
         if (tipo != null) 'tipo': tipo.name,
+        if (novaSenha != null && novaSenha.isNotEmpty) 'novaSenha': novaSenha,
       }),
     );
 

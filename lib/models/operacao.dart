@@ -68,6 +68,17 @@ class Operacao {
 
   bool get finalizada => dataFinalizacao != null;
 
+  bool get editavel => !finalizada && status != Status.cancelado;
+
+  bool get nenhumaEtapaIniciada => processos.every(
+    (processo) => (processo.status ?? Status.naoIniciado) == Status.naoIniciado,
+  );
+
+  bool podeExcluir({required bool porEtapas}) {
+    if (finalizada || !nenhumaEtapaIniciada) return false;
+    return porEtapas || status == Status.naoIniciado;
+  }
+
   bool get todasEtapasConcluidas => processos.every(
     (processo) =>
         processo.status == Status.concluido ||

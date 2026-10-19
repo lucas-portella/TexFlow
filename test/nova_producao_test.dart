@@ -97,16 +97,14 @@ void main() {
       provider.setQuantidadeSolicitada(1000);
       expect(provider.validar(), 'Escolha o responsável da etapa Manga');
 
-      provider.setResponsavel(
-        provider.processos[0],
+      provider.setResponsaveis(provider.processos[0], [
         Funcionario(id: 1, nome: 'João'),
-      );
+      ]);
       expect(provider.validar(), 'Escolha o responsável da etapa Gola');
 
-      provider.setResponsavel(
-        provider.processos[1],
+      provider.setResponsaveis(provider.processos[1], [
         Funcionario(id: 1, nome: 'João'),
-      );
+      ]);
       expect(provider.validar(), isNull);
     });
 
@@ -184,9 +182,11 @@ void main() {
 
     await tester.tap(find.text('Selecionar responsável').first);
     await tester.pumpAndSettle();
-    expect(find.text('Responsável pela etapa Manga'), findsOneWidget);
+    expect(find.text('Responsáveis pela etapa Manga'), findsOneWidget);
     expect(find.text('Maria Cortadora'), findsNothing);
     await tester.tap(find.text('João Costureiro'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Confirmar'));
     await tester.pumpAndSettle();
 
     expect(find.text('João Costureiro'), findsOneWidget);

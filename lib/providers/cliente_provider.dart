@@ -32,4 +32,10 @@ class ClienteProvider extends ChangeNotifier {
     _carregando = false;
     notifyListeners();
   }
+
+  Future<void> excluir(int id) async {
+    await EmpresaService.excluir(id);
+    _clientes = _clientes.where((cliente) => cliente.id != id).toList();
+    notifyListeners();
+  }
 }

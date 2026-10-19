@@ -91,7 +91,7 @@ void main() {
           DadosDaEtapaAdicionada(
             etapa: Etapa(id: 3, nome: 'Bordado', valorComissao: 2),
             valor: 2.5,
-            funcionario: joao,
+            funcionarios: [joao],
           ),
         );
 
@@ -115,7 +115,7 @@ void main() {
         DadosDaEtapaAdicionada(
           nome: 'Acabamento',
           valor: 1.2,
-          funcionario: joao,
+          funcionarios: [joao],
         ),
       );
 
@@ -131,7 +131,7 @@ void main() {
       provider.setModelo(_blusa());
 
       await provider.adicionarEtapaAoPedido(
-        DadosDaEtapaAdicionada(nome: 'estampa', valor: 1.4, funcionario: joao),
+        DadosDaEtapaAdicionada(nome: 'estampa', valor: 1.4, funcionarios: [joao]),
       );
 
       expect(cadastradas, isEmpty);
@@ -149,7 +149,7 @@ void main() {
           DadosDaEtapaAdicionada(
             nome: 'Acabamento',
             valor: 1,
-            funcionario: joao,
+            funcionarios: [joao],
           ),
         );
         final extra = provider.processos.last;
@@ -171,7 +171,7 @@ void main() {
       final provider = criar();
       provider.setModelo(_blusa());
       await provider.adicionarEtapaAoPedido(
-        DadosDaEtapaAdicionada(nome: 'Acabamento', valor: 1, funcionario: joao),
+        DadosDaEtapaAdicionada(nome: 'Acabamento', valor: 1, funcionarios: [joao]),
       );
 
       provider.setModelo(_blusa());
@@ -185,7 +185,7 @@ void main() {
 
       await expectLater(
         provider.adicionarEtapaAoPedido(
-          DadosDaEtapaAdicionada(nome: ' manga ', valor: 1, funcionario: joao),
+          DadosDaEtapaAdicionada(nome: ' manga ', valor: 1, funcionarios: [joao]),
         ),
         throwsA(isA<Exception>()),
       );
@@ -242,9 +242,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('2,00'), findsOneWidget);
 
-    await tester.tap(find.text('Escolha o funcionário'));
+    await tester.ensureVisible(find.text('Escolha os funcionários'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('João Costureiro').last);
+    await tester.tap(find.text('Escolha os funcionários'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'João Costureiro'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Confirmar'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(ElevatedButton, 'Adicionar etapa'));
     await tester.pumpAndSettle();
@@ -265,9 +269,13 @@ void main() {
     final campos = find.byType(TextFormField);
     await tester.enterText(campos.at(0), 'Acabamento');
     await tester.enterText(campos.at(1), '1,10');
-    await tester.tap(find.text('Escolha o funcionário'));
+    await tester.ensureVisible(find.text('Escolha os funcionários'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('João Costureiro').last);
+    await tester.tap(find.text('Escolha os funcionários'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'João Costureiro'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Confirmar'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(ElevatedButton, 'Adicionar etapa'));
     await tester.pumpAndSettle();

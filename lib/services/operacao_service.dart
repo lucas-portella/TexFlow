@@ -63,6 +63,49 @@ class OperacaoService {
     }
   }
 
+  static Future<Operacao> atualizar({
+    required int id,
+    required int clienteId,
+    required int referenciaId,
+    String? numero,
+    String? dataEntrega,
+    required double valorPeca,
+    required int quantidadeSolicitada,
+    required List<Map<String, dynamic>> gradePedido,
+    required List<Map<String, dynamic>> processos,
+  }) async {
+    final response = await http.put(
+      Uri.parse('${ApiConfig.baseUrl}/api/operacoes/$id'),
+      headers: cabecalhosJson,
+      body: jsonEncode({
+        'cliente': {'id': clienteId},
+        'referencia': {'id': referenciaId},
+        'numero': ?numero,
+        'dataEntrega': dataEntrega,
+        'valorPeca': valorPeca,
+        'quantidadeSolicitada': quantidadeSolicitada,
+        'gradePedido': gradePedido,
+        'processos': processos,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(mensagemDeErro(response, 'Erro ao alterar o pedido'));
+    }
+
+    return Operacao.fromMap(decodificar(response));
+  }
+
+  static Future<void> excluir(int id) async {
+    final response = await http.delete(
+      Uri.parse('${ApiConfig.baseUrl}/api/operacoes/$id'),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(mensagemDeErro(response, 'Erro ao excluir o pedido'));
+    }
+  }
+
   static Future<Operacao> finalizar({
     required int operacaoId,
     required int quantidadeProduzida,
@@ -92,6 +135,7 @@ class OperacaoService {
     String? nome,
     required double valorComissao,
     required int funcionarioId,
+    List<int> outrosFuncionarioIds = const [],
   }) async {
     final response = await http.post(
       Uri.parse('${ApiConfig.baseUrl}/api/operacoes/$operacaoId/etapas'),
@@ -101,6 +145,7 @@ class OperacaoService {
         'nome': nome,
         'valorComissao': valorComissao,
         'funcionarioId': funcionarioId,
+        'outrosFuncionarioIds': outrosFuncionarioIds,
       }),
     );
 

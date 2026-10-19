@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:texflow/models/operacao.dart';
+import 'package:texflow/providers/operacao_provider.dart';
 import 'package:texflow/routes/app_routes.dart';
 import 'package:texflow/shared/app_colors.dart';
 import 'package:texflow/shared/formatters.dart';
@@ -30,11 +32,15 @@ class ProductionCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => Navigator.pushNamed(
-          context,
-          AppRoutes.operacaoDetalhes,
-          arguments: operacao.id,
-        ),
+        onTap: () async {
+          final lista = context.read<OperacaoProvider>();
+          await Navigator.pushNamed(
+            context,
+            AppRoutes.operacaoDetalhes,
+            arguments: operacao.id,
+          );
+          lista.carregar();
+        },
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(

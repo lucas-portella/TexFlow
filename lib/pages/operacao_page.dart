@@ -12,6 +12,7 @@ import 'package:texflow/shared/app_colors.dart';
 import 'package:texflow/shared/app_error_message.dart';
 import 'package:texflow/shared/app_primary_button.dart';
 import 'package:texflow/shared/application_app_bar.dart';
+import 'package:texflow/shared/confirmar_exclusao.dart';
 import 'package:texflow/shared/finalizar_producao_dialog.dart';
 import 'package:texflow/shared/grade_table.dart';
 import 'package:texflow/shared/operation_header.dart';
@@ -53,6 +54,38 @@ class _OperacaoPageState extends State<OperacaoPage> {
     try {
       await acao();
       if (sucesso != null) _avisar(sucesso);
+    } catch (e) {
+      _avisar(e.toString());
+    }
+  }
+
+  Future<void> _editar(
+    OperacaoDetalheProvider provider,
+    Operacao operacao,
+  ) async {
+    await Navigator.pushNamed(
+      context,
+      AppRoutes.novoPedido,
+      arguments: operacao,
+    );
+    if (mounted) await provider.recarregar();
+  }
+
+  Future<void> _excluir(
+    OperacaoDetalheProvider provider,
+    Operacao operacao,
+  ) async {
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+
+    if (!await confirmarExclusao(context, operacao.codigo)) return;
+
+    try {
+      await provider.excluir();
+      navigator.pop(true);
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Pedido excluído')),
+      );
     } catch (e) {
       _avisar(e.toString());
     }
@@ -135,10 +168,30 @@ class _OperacaoPageState extends State<OperacaoPage> {
   @override
   Widget build(BuildContext context) {
     final modo = context.watch<PreferenciasProvider>().modoOperacao;
+    final detalhe = context.watch<OperacaoDetalheProvider>();
+    final aberta = detalhe.operacao;
 
     return Scaffold(
       backgroundColor: AppColors.screenBackground,
-      appBar: const ApplicationAppBar(title: 'Detalhes da produção'),
+      appBar: ApplicationAppBar(
+        title: 'Detalhes da produção',
+        actions: [
+          if (aberta != null && aberta.editavel)
+            IconButton(
+              tooltip: 'Editar pedido',
+              icon: const Icon(Icons.edit_outlined, color: AppColors.ink),
+              onPressed: () => _editar(detalhe, aberta),
+            ),
+          if (aberta != null &&
+              aberta.podeExcluir(porEtapas: modo == ModoOperacao.porEtapas))
+            IconButton(
+              tooltip: 'Excluir pedido',
+              icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+              onPressed: () => _excluir(detalhe, aberta),
+            ),
+          const SizedBox(width: 4),
+        ],
+      ),
       body: Consumer<OperacaoDetalheProvider>(
         builder: (context, provider, child) {
           if (provider.carregando && provider.operacao == null) {
@@ -226,7 +279,11 @@ class _OperacaoPageState extends State<OperacaoPage> {
                           etapaId: dados.etapa?.id,
                           nome: dados.nome,
                           valorComissao: dados.valor,
-                          funcionarioId: dados.funcionario.id,
+                          funcionarioId: dados.funcionarios.first.id,
+                          outrosFuncionarioIds: dados.funcionarios
+                              .skip(1)
+                              .map((item) => item.id)
+                              .toList(),
                         ),
                       ),
                       icon: const Icon(Icons.add),

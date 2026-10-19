@@ -4,6 +4,8 @@ import 'package:texflow/pages/admin_empresas_page.dart';
 import 'package:texflow/pages/alterar_senha_page.dart';
 import 'package:texflow/pages/cadastro_usuario_page.dart';
 import 'package:texflow/models/referencia.dart';
+import 'package:texflow/models/empresa.dart';
+import 'package:texflow/models/operacao.dart';
 import 'package:texflow/models/usuario.dart';
 import 'package:texflow/pages/atalhos_page.dart';
 import 'package:texflow/pages/clientes_page.dart';
@@ -42,8 +44,14 @@ class AppRouter {
     AppRoutes.dashboard: (context) => const DashboardPage(),
     AppRoutes.pesquisa: (context) => const SearchPage(),
     AppRoutes.configuracoes: (context) => const SettingsPage(),
-    AppRoutes.novoPedido: (context) => const NovoPedidoPage(),
-    AppRoutes.novaEmpresa: (context) => const CadastroEmpresaPage(),
+    AppRoutes.novoPedido: (context) {
+      final pedido = ModalRoute.of(context)?.settings.arguments as Operacao?;
+      return NovoPedidoPage(operacao: pedido);
+    },
+    AppRoutes.novaEmpresa: (context) {
+      final cliente = ModalRoute.of(context)?.settings.arguments as Empresa?;
+      return CadastroEmpresaPage(empresa: cliente);
+    },
     AppRoutes.modelos: (context) => const ModelosPage(),
     AppRoutes.modeloForm: (context) {
       final modelo = ModalRoute.of(context)?.settings.arguments as Referencia?;

@@ -66,6 +66,7 @@ class _CadastroUsuarioPageState extends State<CadastroUsuarioPage> {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     final provider = context.read<UsuariosProvider>();
+    final usuarioLogado = context.read<UsuarioProvider>();
     final travado = _travado;
 
     if (!_formKey.currentState!.validate()) return;
@@ -76,14 +77,21 @@ class _CadastroUsuarioPageState extends State<CadastroUsuarioPage> {
 
     try {
       if (_editando) {
-        await provider.atualizar(
+        final tokenNovo = await provider.atualizar(
           widget.usuario!,
           nome: _nomeController.text.trim(),
           email: _emailController.text.trim(),
           cargo: cargo,
           tipo: travado ? null : _tipo,
           modulos: travado ? null : _modulos,
+          novaSenha: _senhaController.text,
         );
+        final logado = usuarioLogado.usuario;
+        if (tokenNovo != null &&
+            logado != null &&
+            logado.idUsuario == widget.usuario!.idUsuario) {
+          await usuarioLogado.trocarToken(tokenNovo);
+        }
       } else {
         await provider.criar(
           nome: _nomeController.text.trim(),
@@ -154,13 +162,14 @@ class _CadastroUsuarioPageState extends State<CadastroUsuarioPage> {
                 validator: validarEmail,
               ),
               AppTextField(
-                label: 'SENHA',
-                hintText: '********',
+                label: _editando ? 'NOVA SENHA' : 'SENHA',
+                hintText: _editando ? 'Deixe em branco para manter' : '********',
                 prefixIcon: Icons.lock_outline_rounded,
                 controller: _senhaController,
                 obscureText: true,
-                enabled: !_editando,
-                validator: _editando ? null : validarSenha,
+                validator: (valor) => _editando && (valor ?? '').isEmpty
+                    ? null
+                    : validarSenha(valor),
               ),
               AppDropdownField<UserType>(
                 label: 'PERFIL',

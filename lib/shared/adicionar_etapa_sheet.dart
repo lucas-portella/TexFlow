@@ -7,6 +7,7 @@ import 'package:texflow/providers/funcionario_provider.dart';
 import 'package:texflow/shared/app_dropdown_field.dart';
 import 'package:texflow/shared/app_primary_button.dart';
 import 'package:texflow/shared/app_text_field.dart';
+import 'package:texflow/shared/escolher_responsaveis_sheet.dart';
 import 'package:texflow/shared/formatters.dart';
 import 'package:texflow/shared/validators.dart';
 
@@ -14,13 +15,13 @@ class DadosDaEtapaAdicionada {
   final Etapa? etapa;
   final String? nome;
   final double valor;
-  final Funcionario funcionario;
+  final List<Funcionario> funcionarios;
 
   const DadosDaEtapaAdicionada({
     this.etapa,
     this.nome,
     required this.valor,
-    required this.funcionario,
+    required this.funcionarios,
   });
 
   bool get ehNova => etapa == null;
@@ -62,8 +63,9 @@ class _AdicionarEtapaSheetState extends State<AdicionarEtapaSheet> {
   final _nomeController = TextEditingController();
   final _valorController = TextEditingController();
   bool _nova = false;
+  bool _escolheuOTipo = false;
   Etapa? _etapa;
-  Funcionario? _funcionario;
+  List<Funcionario> _funcionarios = [];
   bool _carregando = false;
 
   @override
@@ -124,7 +126,7 @@ class _AdicionarEtapaSheetState extends State<AdicionarEtapaSheet> {
           etapa: _nova ? null : _etapa,
           nome: _nova ? _nomeController.text.trim() : null,
           valor: lerValor(_valorController.text)!,
-          funcionario: _funcionario!,
+          funcionarios: _funcionarios,
         ),
       );
       navigator.pop();
@@ -140,8 +142,17 @@ class _AdicionarEtapaSheetState extends State<AdicionarEtapaSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final disponiveis = _disponiveis(context.watch<EtapaProvider>().etapas);
-    final funcionarios = context.watch<FuncionarioProvider>().ativos;
+    final etapaProvider = context.watch<EtapaProvider>();
+    final disponiveis = _disponiveis(etapaProvider.etapas);
+
+    if (!_escolheuOTipo &&
+        !_nova &&
+        !etapaProvider.carregando &&
+        disponiveis.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _nova = true);
+      });
+    }
 
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
@@ -173,8 +184,10 @@ class _AdicionarEtapaSheetState extends State<AdicionarEtapaSheet> {
                   ButtonSegment(value: true, label: const Text('Nova etapa')),
                 ],
                 selected: {_nova},
-                onSelectionChanged: (valor) =>
-                    setState(() => _nova = valor.first),
+                onSelectionChanged: (valor) => setState(() {
+                  _escolheuOTipo = true;
+                  _nova = valor.first;
+                }),
               ),
             ),
             if (_nova)
@@ -209,21 +222,9 @@ class _AdicionarEtapaSheetState extends State<AdicionarEtapaSheet> {
               ),
               validator: _validarValor,
             ),
-            AppDropdownField<Funcionario>(
-              label: 'RESPONSÁVEL',
-              hintText: 'Escolha o funcionário',
-              prefixIcon: Icons.person_outline,
-              value: _funcionario,
-              items: [
-                for (final funcionario in funcionarios)
-                  DropdownMenuItem(
-                    value: funcionario,
-                    child: Text(funcionario.nome),
-                  ),
-              ],
-              onChanged: (valor) => setState(() => _funcionario = valor),
-              validator: (valor) =>
-                  valor == null ? 'Escolha o responsável' : null,
+            ResponsaveisField(
+              selecionados: _funcionarios,
+              aoMudar: (novos) => _funcionarios = novos,
             ),
             AppPrimaryButton(
               label: 'Adicionar etapa',

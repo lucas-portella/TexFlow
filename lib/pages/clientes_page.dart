@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:texflow/models/empresa.dart';
 import 'package:texflow/providers/cliente_provider.dart';
 import 'package:texflow/routes/app_routes.dart';
 import 'package:texflow/shared/app_colors.dart';
 import 'package:texflow/shared/app_error_message.dart';
 import 'package:texflow/shared/application_app_bar.dart';
 import 'package:texflow/shared/cadastro_item_tile.dart';
+import 'package:texflow/shared/confirmar_exclusao.dart';
 
 class ClientesPage extends StatefulWidget {
   const ClientesPage({super.key});
@@ -25,10 +27,29 @@ class _ClientesPageState extends State<ClientesPage> {
     });
   }
 
-  Future<void> _novoCliente() async {
+  Future<void> _abrirCadastro([Empresa? cliente]) async {
     final provider = context.read<ClienteProvider>();
-    await Navigator.pushNamed(context, AppRoutes.novaEmpresa);
+    await Navigator.pushNamed(
+      context,
+      AppRoutes.novaEmpresa,
+      arguments: cliente,
+    );
     provider.carregar();
+  }
+
+  Future<void> _excluir(Empresa cliente) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final provider = context.read<ClienteProvider>();
+
+    if (!await confirmarExclusao(context, cliente.nomeFantasia)) return;
+
+    try {
+      await provider.excluir(cliente.id);
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
   }
 
   @override
@@ -40,7 +61,7 @@ class _ClientesPageState extends State<ClientesPage> {
         backgroundColor: AppColors.navBar,
         foregroundColor: AppColors.white,
         tooltip: 'Novo cliente',
-        onPressed: _novoCliente,
+        onPressed: () => _abrirCadastro(),
         child: const Icon(Icons.add),
       ),
       body: Consumer<ClienteProvider>(
@@ -69,7 +90,8 @@ class _ClientesPageState extends State<ClientesPage> {
                   CadastroItemTile(
                     titulo: cliente.nomeFantasia,
                     subtitulo: cliente.cnpj,
-                    onTap: () {},
+                    onTap: () => _abrirCadastro(cliente),
+                    onExcluir: () => _excluir(cliente),
                   ),
               ],
             ),
