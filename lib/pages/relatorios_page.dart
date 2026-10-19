@@ -11,7 +11,6 @@ import 'package:texflow/shared/filtro_chip.dart';
 import 'package:texflow/shared/formatters.dart';
 import 'package:texflow/shared/metrica_card.dart';
 import 'package:texflow/shared/section_title.dart';
-import 'package:texflow/shared/variacao_chip.dart';
 
 class RelatoriosPage extends StatefulWidget {
   const RelatoriosPage({super.key});
@@ -66,14 +65,6 @@ class _Cabecalho extends StatelessWidget {
     return '${dia(provider.inicio)} a ${dia(provider.fim)}';
   }
 
-  String? get _textoDaComparacao {
-    final periodo = provider.empresa?.periodo ?? provider.funcionarios?.periodo;
-    if (periodo == null || periodo.inicio.isEmpty) return null;
-
-    final dias = periodo.dias == 1 ? '1 dia' : '${periodo.dias} dias';
-    return '$dias · comparado com ${formatarData(periodo.anteriorInicio)} a ${formatarData(periodo.anteriorFim)}';
-  }
-
   Future<void> _escolherPeriodo(BuildContext context) async {
     final escolhido = await showDateRangePicker(
       context: context,
@@ -92,8 +83,6 @@ class _Cabecalho extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final texto = _textoDaComparacao;
-
     return Container(
       color: AppColors.white,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -109,13 +98,6 @@ class _Cabecalho extends StatelessWidget {
                 ? null
                 : provider.voltarParaPadrao,
           ),
-          if (texto != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              texto,
-              style: const TextStyle(fontSize: 12, color: AppColors.muted),
-            ),
-          ],
           const SizedBox(height: 4),
           const TabBar(
             labelColor: AppColors.ink,
@@ -178,24 +160,18 @@ class _AbaFuncionarios extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final unidade = relatorio.periodo.unidadeMedia;
-
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         MetricaCard(
           rotulo: 'Total de peças',
-          mostrarMedia: false,
           metrica: relatorio.totalPecas,
-          unidadeMedia: unidade,
           dinheiro: false,
         ),
         const SizedBox(height: 12),
         MetricaCard(
           rotulo: 'Total de repasses',
-          mostrarMedia: false,
           metrica: relatorio.totalRepasse,
-          unidadeMedia: unidade,
           maisEhBom: null,
           cor: AppColors.warning,
         ),
@@ -211,7 +187,7 @@ class _AbaFuncionarios extends StatelessWidget {
         for (final linha in relatorio.funcionarios)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: _CartaoDoFuncionario(linha: linha, unidade: unidade),
+            child: _CartaoDoFuncionario(linha: linha),
           ),
       ],
     );
@@ -220,9 +196,8 @@ class _AbaFuncionarios extends StatelessWidget {
 
 class _CartaoDoFuncionario extends StatelessWidget {
   final LinhaFuncionarioRelatorio linha;
-  final String unidade;
 
-  const _CartaoDoFuncionario({required this.linha, required this.unidade});
+  const _CartaoDoFuncionario({required this.linha});
 
   Widget _dado(String rotulo, String valor) {
     return Expanded(
@@ -274,7 +249,6 @@ class _CartaoDoFuncionario extends StatelessWidget {
                   ],
                 ),
               ),
-              VariacaoChip(variacao: linha.pecas.variacaoPercentual),
             ],
           ),
           const SizedBox(height: 10),
@@ -282,13 +256,10 @@ class _CartaoDoFuncionario extends StatelessWidget {
             '${formatarInteiro(linha.pecas.atual)} peças',
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
           ),
-          Text(
-            'Média por $unidade: ${formatarNumero(linha.pecas.mediaAtual)} peças',
-            style: const TextStyle(fontSize: 12, color: AppColors.ink),
-          ),
-          Text(
-            'Comparado ao período anterior: ${formatarInteiro(linha.pecas.anterior)} peças',
-            style: const TextStyle(fontSize: 12, color: AppColors.muted),
+          const SizedBox(height: 4),
+          ComparacaoComPeriodoAnterior(
+            anterior: '${formatarInteiro(linha.pecas.anterior)} peças',
+            variacao: linha.pecas.variacaoPercentual,
           ),
           const SizedBox(height: 12),
           Row(
@@ -311,47 +282,40 @@ class _AbaEmpresa extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final unidade = relatorio.periodo.unidadeMedia;
-
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         MetricaCard(
-          rotulo: 'Média de faturamento',
+          rotulo: 'Faturamento do ano até agora',
+          metrica: relatorio.faturamentoDoAno,
+        ),
+        const SizedBox(height: 20),
+        const SectionTitle(texto: 'NO PERÍODO ESCOLHIDO'),
+        MetricaCard(
+          rotulo: 'Total de faturamento',
           metrica: relatorio.faturamento,
-          unidadeMedia: unidade,
           cor: AppColors.success,
         ),
         const SizedBox(height: 12),
         MetricaCard(
-          rotulo: 'Faturamento do ano até agora',
-          mostrarMedia: false,
-          metrica: relatorio.faturamentoDoAno,
-          unidadeMedia: 'mês',
-        ),
-        const SizedBox(height: 12),
-        MetricaCard(
-          rotulo: 'Média de repasses aos funcionários',
+          rotulo: 'Total de repasses aos funcionários',
           metrica: relatorio.repasses,
-          unidadeMedia: unidade,
           maisEhBom: false,
           cor: AppColors.warning,
         ),
         if (relatorio.custosIncluidos) ...[
           const SizedBox(height: 12),
           MetricaCard(
-            rotulo: 'Média de despesas (custos)',
+            rotulo: 'Total de despesas (custos)',
             metrica: relatorio.despesas,
-            unidadeMedia: unidade,
             maisEhBom: false,
             cor: AppColors.danger,
           ),
         ],
         const SizedBox(height: 12),
         MetricaCard(
-          rotulo: 'Média de lucro',
+          rotulo: 'Total de lucro',
           metrica: relatorio.lucro,
-          unidadeMedia: unidade,
           cor: relatorio.lucro.atual < 0 ? AppColors.danger : AppColors.success,
         ),
         const SizedBox(height: 12),
@@ -363,18 +327,16 @@ class _AbaEmpresa extends StatelessWidget {
               child: MetricaCard(
                 rotulo: 'Produções',
                 metrica: relatorio.producoes,
-                unidadeMedia: unidade,
                 dinheiro: false,
-                mostrarMedia: false,
+                compacto: true,
               ),
             ),
             Expanded(
               child: MetricaCard(
                 rotulo: 'Peças',
                 metrica: relatorio.pecas,
-                unidadeMedia: unidade,
                 dinheiro: false,
-                mostrarMedia: false,
+                compacto: true,
               ),
             ),
           ],
@@ -388,11 +350,7 @@ class _AbaEmpresa extends StatelessWidget {
             child: Column(
               children: [
                 for (final linha in relatorio.repassesPorEtapa)
-                  _LinhaDeValor(
-                    titulo: linha.etapa,
-                    metrica: linha.valor,
-                    unidade: unidade,
-                  ),
+                  _LinhaDeValor(titulo: linha.etapa, metrica: linha.valor),
               ],
             ),
           ),
@@ -409,7 +367,6 @@ class _AbaEmpresa extends StatelessWidget {
                     _LinhaDeValor(
                       titulo: linha.categoria.rotulo,
                       metrica: linha.valor,
-                      unidade: unidade,
                     ),
                 ],
               ),
@@ -438,55 +395,40 @@ class _SemDados extends StatelessWidget {
 class _LinhaDeValor extends StatelessWidget {
   final String titulo;
   final Metrica metrica;
-  final String unidade;
 
-  const _LinhaDeValor({
-    required this.titulo,
-    required this.metrica,
-    required this.unidade,
-  });
+  const _LinhaDeValor({required this.titulo, required this.metrica});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+          Row(
+            children: [
+              Expanded(
+                child: Text(
                   titulo,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                Text(
-                  'Média do período anterior: ${formatarMoeda(metrica.mediaAnterior)}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.muted),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
+              ),
               Text(
-                formatarMoeda(metrica.mediaAtual),
+                formatarMoeda(metrica.atual),
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(height: 4),
-              VariacaoChip(
-                variacao: metrica.variacaoPercentual,
-                maisEhBom: false,
-              ),
             ],
+          ),
+          const SizedBox(height: 2),
+          ComparacaoComPeriodoAnterior(
+            anterior: formatarMoeda(metrica.anterior),
+            variacao: metrica.variacaoPercentual,
+            maisEhBom: false,
           ),
         ],
       ),

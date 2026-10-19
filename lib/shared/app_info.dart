@@ -1,3 +1,3 @@
 class AppInfo {
-  static const versao = '1.0.3';
+  static const versao = '1.0.4';
 }
