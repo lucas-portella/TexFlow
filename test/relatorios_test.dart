@@ -306,16 +306,14 @@ void main() {
   });
 
   group('tela de relatórios', () {
-    testWidgets('o período vem do calendário e mostra o que foi comparado', (
+    testWidgets('o período vem do calendário, sem frase de comparação no topo', (
       tester,
     ) async {
       final provider = await _abrir(tester);
 
       expect(find.text('01/03/2026 a 18/03/2026'), findsOneWidget);
-      expect(
-        find.text('18 dias · comparado com 11/02/2026 a 28/02/2026'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('comparado com'), findsNothing);
+      expect(find.textContaining('18 dias'), findsNothing);
       expect(find.text('Esta semana'), findsNothing);
       expect(find.text('Este mês'), findsNothing);
       expect(find.text('Este ano'), findsNothing);
@@ -352,7 +350,7 @@ void main() {
       expect(find.text('10/03/2026'), findsOneWidget);
     });
 
-    testWidgets('funcionários: totais, ranking, média e comparação', (
+    testWidgets('funcionários: totais, ranking e comparação discreta', (
       tester,
     ) async {
       await _abrir(tester);
@@ -363,11 +361,8 @@ void main() {
       expect(find.text('Ana'), findsOneWidget);
       expect(find.text('Mais faz: Costura'), findsOneWidget);
       expect(find.text('150 peças'), findsWidgets);
-      expect(find.text('Média por semana: 58,3 peças'), findsOneWidget);
-      expect(
-        find.text('Comparado ao período anterior: 0 peças'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('Média'), findsNothing);
+      expect(find.text('Período anterior: 0 peças'), findsOneWidget);
       expect(find.text('Sem base'), findsOneWidget);
       expect(find.text('Bia'), findsOneWidget);
       expect(find.text('-100,0%'), findsOneWidget);
@@ -376,27 +371,32 @@ void main() {
     });
 
     testWidgets(
-      'empresa: faturamento, médias, despesas por categoria e etapa',
+      'empresa: totais do período, ano em primeiro, despesas por categoria e etapa',
       (tester) async {
         await _abrir(tester);
 
         await tester.tap(find.text('Empresa'));
         await tester.pumpAndSettle();
 
-        expect(find.text('Média de faturamento'), findsOneWidget);
-        expect(find.text('R\$ 583,33'), findsOneWidget);
-        expect(find.textContaining('Média por semana'), findsNothing);
-        expect(
-          find.text('Média do período anterior: R\$ 777,78'),
-          findsOneWidget,
-        );
+        expect(find.textContaining('Média'), findsNothing);
+        expect(find.text('Total de faturamento'), findsOneWidget);
+        expect(find.text('R\$ 1.500,00'), findsOneWidget);
+        expect(find.text('Período anterior: R\$ 2.000,00'), findsOneWidget);
         expect(find.text('-25,0%'), findsWidgets);
         expect(find.text('Faturamento do ano até agora'), findsOneWidget);
         expect(find.text('R\$ 3.500,00'), findsOneWidget);
         expect(find.text('Período anterior: R\$ 1.000,00'), findsOneWidget);
-        expect(find.text('Média de repasses aos funcionários'), findsOneWidget);
-        expect(find.text('Média de despesas (custos)'), findsOneWidget);
-        expect(find.text('Média de lucro'), findsOneWidget);
+        expect(find.text('Total de repasses aos funcionários'), findsOneWidget);
+        expect(find.text('Total de despesas (custos)'), findsOneWidget);
+        expect(find.text('Total de lucro'), findsOneWidget);
+
+        final doAno = tester
+            .getTopLeft(find.text('Faturamento do ano até agora'))
+            .dy;
+        final doPeriodo = tester
+            .getTopLeft(find.text('Total de faturamento'))
+            .dy;
+        expect(doAno, lessThan(doPeriodo));
 
         await tester.scrollUntilVisible(
           find.text('DESPESAS POR CATEGORIA'),
@@ -410,6 +410,51 @@ void main() {
       },
     );
 
+    testWidgets('em tela de celular a comparação fica embaixo, sem amontoar', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(360, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<RelatoriosProvider>.value(
+          value: FakeRelatoriosProvider(),
+          child: MaterialApp(
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: const TextScaler.linear(0.5)),
+              child: child!,
+            ),
+            home: const RelatoriosPage(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Empresa'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+
+      final valor = tester.getRect(find.text('R\$ 1.500,00'));
+      final anterior = tester.getRect(find.text('Período anterior: R\$ 2.000,00'));
+      final percentual = tester.getRect(find.text('-25,0%').first);
+
+      expect(anterior.top, greaterThan(valor.bottom));
+      expect((anterior.center.dy - percentual.center.dy).abs(), lessThan(8));
+      expect(percentual.left, greaterThan(anterior.right));
+      expect(percentual.right, lessThanOrEqualTo(360 - 16));
+
+      final rotuloCompacto = tester.getRect(find.text('Produções'));
+      final numeroCompacto = tester.getRect(find.text('2').first);
+      final comparacaoCompacta = tester.getRect(find.text('Anterior: 1'));
+      expect(rotuloCompacto.overlaps(numeroCompacto), isFalse);
+      expect(numeroCompacto.overlaps(comparacaoCompacta), isFalse);
+      expect(comparacaoCompacta.top, greaterThan(numeroCompacto.bottom));
+    });
+
     testWidgets(
       'sem o módulo de custos na empresa não aparece nenhuma despesa',
       (tester) async {
@@ -418,8 +463,8 @@ void main() {
         await tester.tap(find.text('Empresa'));
         await tester.pumpAndSettle();
 
-        expect(find.text('Média de despesas (custos)'), findsNothing);
-        expect(find.text('Média de lucro'), findsOneWidget);
+        expect(find.text('Total de despesas (custos)'), findsNothing);
+        expect(find.text('Total de lucro'), findsOneWidget);
 
         await tester.scrollUntilVisible(
           find.text('REPASSES POR TIPO DE ETAPA'),

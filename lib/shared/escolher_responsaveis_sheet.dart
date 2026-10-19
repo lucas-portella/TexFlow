@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:texflow/models/funcionario.dart';
 import 'package:texflow/providers/funcionario_provider.dart';
-import 'package:texflow/shared/app_colors.dart';
 import 'package:texflow/shared/app_primary_button.dart';
 import 'package:texflow/shared/app_text_field.dart';
 import 'package:texflow/shared/funcionario_form_sheet.dart';
@@ -97,17 +96,10 @@ class _EscolherResponsaveisSheetState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 4),
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
             child: Text(
               widget.titulo,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(24, 0, 24, 8),
-            child: Text(
-              'Cada pessoa marcada recebe o valor da etapa por peça.',
-              style: TextStyle(fontSize: 12, color: AppColors.muted),
             ),
           ),
           Flexible(
@@ -136,9 +128,7 @@ class _EscolherResponsaveisSheetState
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
             child: AppPrimaryButton(
-              label: _ids.isEmpty
-                  ? 'Escolha pelo menos uma pessoa'
-                  : 'Confirmar (${_ids.length})',
+              label: _ids.isEmpty ? 'Confirmar' : 'Confirmar (${_ids.length})',
               onPressed: _ids.isEmpty
                   ? null
                   : () => Navigator.pop(context, _resultado(provider.ativos)),

@@ -8,26 +8,23 @@ import 'package:texflow/shared/variacao_chip.dart';
 class MetricaCard extends StatelessWidget {
   final String rotulo;
   final Metrica metrica;
-  final String unidadeMedia;
   final bool dinheiro;
   final bool? maisEhBom;
   final Color cor;
-  final bool mostrarMedia;
+  final bool compacto;
 
   const MetricaCard({
     super.key,
     required this.rotulo,
     required this.metrica,
-    required this.unidadeMedia,
     this.dinheiro = true,
     this.maisEhBom = true,
     this.cor = AppColors.ink,
-    this.mostrarMedia = true,
+    this.compacto = false,
   });
 
-  String _formatar(double valor, {bool media = false}) {
-    if (dinheiro) return formatarMoeda(valor);
-    return media ? formatarNumero(valor) : formatarInteiro(valor);
+  String _formatar(double valor) {
+    return dinheiro ? formatarMoeda(valor) : formatarInteiro(valor);
   }
 
   @override
@@ -36,44 +33,64 @@ class MetricaCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  rotulo,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.muted,
-                  ),
-                ),
-              ),
-              VariacaoChip(
-                variacao: metrica.variacaoPercentual,
-                maisEhBom: maisEhBom,
-              ),
-            ],
+          Text(
+            rotulo,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.muted,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
-            mostrarMedia
-                ? _formatar(metrica.mediaAtual, media: true)
-                : _formatar(metrica.atual),
+            _formatar(metrica.atual),
             style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.w800,
               color: cor,
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            mostrarMedia
-                ? 'Média do período anterior: ${_formatar(metrica.mediaAnterior, media: true)}'
-                : 'Período anterior: ${_formatar(metrica.anterior)}',
-            style: const TextStyle(fontSize: 12, color: AppColors.muted),
+          const SizedBox(height: 8),
+          ComparacaoComPeriodoAnterior(
+            anterior: _formatar(metrica.anterior),
+            variacao: metrica.variacaoPercentual,
+            maisEhBom: maisEhBom,
+            compacto: compacto,
           ),
         ],
       ),
+    );
+  }
+}
+
+class ComparacaoComPeriodoAnterior extends StatelessWidget {
+  final String anterior;
+  final double? variacao;
+  final bool? maisEhBom;
+  final bool compacto;
+
+  const ComparacaoComPeriodoAnterior({
+    super.key,
+    required this.anterior,
+    required this.variacao,
+    this.maisEhBom = true,
+    this.compacto = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          child: Text(
+            '${compacto ? 'Anterior' : 'Período anterior'}: $anterior',
+            style: const TextStyle(fontSize: 12, color: AppColors.muted),
+          ),
+        ),
+        const SizedBox(width: 8),
+        VariacaoChip(variacao: variacao, maisEhBom: maisEhBom),
+      ],
     );
   }
 }

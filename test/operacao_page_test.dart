@@ -708,9 +708,9 @@ void main() {
       await tester.tap(find.text('Escolha os funcionários'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Cada pessoa marcada recebe o valor da etapa por peça.'), findsOneWidget);
+      expect(find.textContaining('Cada pessoa'), findsNothing);
       final confirmar = tester.widget<ElevatedButton>(
-        find.widgetWithText(ElevatedButton, 'Escolha pelo menos uma pessoa'),
+        find.widgetWithText(ElevatedButton, 'Confirmar'),
       );
       expect(confirmar.onPressed, isNull);
 
@@ -719,7 +719,7 @@ void main() {
       expect(find.text('Confirmar (1)'), findsOneWidget);
       await tester.tap(find.widgetWithText(CheckboxListTile, 'João Costureiro'));
       await tester.pumpAndSettle();
-      expect(find.text('Escolha pelo menos uma pessoa'), findsOneWidget);
+      expect(find.text('Confirmar'), findsOneWidget);
     });
 
     testWidgets('nova etapa pede o nome e o valor', (tester) async {
