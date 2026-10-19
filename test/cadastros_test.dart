@@ -132,6 +132,7 @@ class FakeFechamentoProvider extends FechamentoProvider {
         operacoes: [
           RepasseOperacao(
             operacaoId: 7,
+            numero: '4521',
             cliente: 'Moda João',
             quantidade: 1000,
             total: 300,
@@ -382,7 +383,9 @@ void main() {
     await tester.tap(find.text('João Costureiro'));
     await tester.pumpAndSettle();
     expect(find.text('Total a receber: R\$ 700,00'), findsOneWidget);
+    expect(find.text('OP-4521 · Moda João'), findsOneWidget);
     expect(find.text('OP-8 · Baby Chic'), findsOneWidget);
+    expect(find.textContaining('OP-7'), findsNothing);
     expect(find.text('Gola · R\$ 0,50 × 500'), findsOneWidget);
     expect(find.text('R\$ 250,00'), findsOneWidget);
     expect(find.text('R\$ 150,00'), findsOneWidget);

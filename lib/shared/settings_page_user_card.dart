@@ -49,10 +49,14 @@ class SettingsPageUserCard extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              Text(
-                usuario.descricaoDoPerfil,
-                style: TextStyle(fontFamily: 'DM Sans', color: AppColors.grey),
-              ),
+              if (usuario.cargoInformado != null)
+                Text(
+                  usuario.cargoInformado!,
+                  style: TextStyle(
+                    fontFamily: 'DM Sans',
+                    color: AppColors.grey,
+                  ),
+                ),
             ],
           ),
         ],

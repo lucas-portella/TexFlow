@@ -52,9 +52,9 @@ class Usuario {
 
   bool get temAlgumItemDoMenu => Modulo.doMenu.any(temModulo);
 
-  String get descricaoDoPerfil {
-    if (cargo != null && cargo!.isNotEmpty) return cargo!;
-    return tipo == UserType.GESTOR ? 'Supervisor(a) de produção' : 'Operador';
+  String? get cargoInformado {
+    final texto = cargo?.trim();
+    return texto == null || texto.isEmpty ? null : texto;
   }
 
   void alterarSenha(String novaSenha) {

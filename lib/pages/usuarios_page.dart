@@ -81,8 +81,10 @@ class _UsuariosPageState extends State<UsuariosPage> {
                 for (final usuario in provider.usuarios)
                   CadastroItemTile(
                     titulo: usuario.nome,
-                    subtitulo:
-                        '${usuario.descricaoDoPerfil} · ${_resumo(usuario)}',
+                    subtitulo: [
+                      ?usuario.cargoInformado,
+                      _resumo(usuario),
+                    ].join(' · '),
                     selo: usuario.donoDaEmpresa
                         ? const Text(
                             'Principal',
