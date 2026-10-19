@@ -43,6 +43,13 @@ class OperacaoDetalheProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> excluir() async {
+    final operacao = _operacao;
+    if (operacao == null) return;
+
+    await OperacaoService.excluir(operacao.id);
+  }
+
   Future<void> alterarStatus(Status status) async {
     final operacao = _operacao;
     if (operacao == null) return;
@@ -71,6 +78,7 @@ class OperacaoDetalheProvider extends ChangeNotifier {
     String? nome,
     required double valorComissao,
     required int funcionarioId,
+    List<int> outrosFuncionarioIds = const [],
   }) async {
     final operacao = _operacao;
     if (operacao == null) return;
@@ -81,6 +89,7 @@ class OperacaoDetalheProvider extends ChangeNotifier {
       nome: nome,
       valorComissao: valorComissao,
       funcionarioId: funcionarioId,
+      outrosFuncionarioIds: outrosFuncionarioIds,
     );
     notifyListeners();
   }

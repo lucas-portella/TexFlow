@@ -74,6 +74,15 @@ class UsuarioProvider extends ChangeNotifier {
     await _guardar(_usuario!);
   }
 
+  Future<void> trocarToken(String token) async {
+    final atual = _usuario;
+    if (atual == null || token.isEmpty) return;
+
+    atual.token = token;
+    Sessao.token = token;
+    await _guardar(atual);
+  }
+
   Future<void> atualizarPerfil() async {
     final atual = usuario;
     if (atual == null) return;

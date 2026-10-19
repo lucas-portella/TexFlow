@@ -313,6 +313,20 @@ void main() {
     ]);
   });
 
+  testWidgets('modelo: pode ser salvo sem nenhuma etapa', (tester) async {
+    final modelos = FakeModeloProvider();
+    await _abrir(tester, const ModeloFormPage(), modelos: modelos);
+
+    await tester.enterText(find.byType(TextFormField), 'Blusinha');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Salvar modelo'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Adicione ao menos uma etapa'), findsNothing);
+    expect(modelos.salvos, [
+      {'id': null, 'nome': 'Blusinha', 'etapaIds': <int>[], 'ativo': true},
+    ]);
+  });
+
   testWidgets('modelo: escolhe etapas do catálogo, remove e salva na ordem', (
     tester,
   ) async {
@@ -320,9 +334,7 @@ void main() {
     await _abrir(tester, const ModeloFormPage(), modelos: modelos);
 
     await tester.enterText(find.byType(TextFormField), 'Blusinha');
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Salvar modelo'));
-    await tester.pumpAndSettle();
-    expect(find.text('Adicione ao menos uma etapa'), findsOneWidget);
+    expect(find.text('Nenhuma etapa escolhida (opcional)'), findsOneWidget);
 
     await tester.tap(find.text('Adicionar etapa'));
     await tester.pumpAndSettle();

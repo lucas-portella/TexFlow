@@ -8,6 +8,7 @@ class ProcessoProdutivo {
   String descricao;
   Empresa? empresaResponsavel; // Empresa responsável pelo serviço
   Funcionario? funcionario; // Funcionário responsável pela etapa
+  List<Funcionario> funcionariosAdicionais; // Demais funcionários da mesma etapa
   double? valorComissao; // Comissão por peça paga ao funcionário
   DateTime? dataInicio; // Data de início da operação
   DateTime? dataFim; // Data de fim da operação
@@ -19,13 +20,29 @@ class ProcessoProdutivo {
     required this.descricao,
     this.empresaResponsavel,
     this.funcionario,
+    List<Funcionario>? funcionariosAdicionais,
     this.valorComissao,
     this.alteradoPor,
     this.dataFim,
     this.dataInicio,
     this.idProcessoProdutivo,
     this.status,
-  });
+  }) : funcionariosAdicionais = funcionariosAdicionais ?? [];
+
+  List<Funcionario> get funcionarios => [
+    ?funcionario,
+    ...funcionariosAdicionais,
+  ];
+
+  String get nomesDosResponsaveis =>
+      funcionarios.map((item) => item.nome).join(', ');
+
+  void definirResponsaveis(List<Funcionario> escolhidos) {
+    funcionario = escolhidos.isEmpty ? null : escolhidos.first;
+    funcionariosAdicionais = escolhidos.length > 1
+        ? escolhidos.sublist(1)
+        : <Funcionario>[];
+  }
 
   void setStatus(Status novoStatus, Usuario usuario) {
     status = novoStatus;
@@ -57,6 +74,10 @@ class ProcessoProdutivo {
       funcionario: map['funcionario'] != null
           ? Funcionario.fromMap(map['funcionario'])
           : null,
+      funcionariosAdicionais: [
+        for (final item in (map['funcionariosAdicionais'] as List? ?? []))
+          Funcionario.fromMap(item as Map<String, dynamic>),
+      ],
       valorComissao: (map['valorComissao'] as num?)?.toDouble(),
       alteradoPor: map['alteradoPor'] != null
           ? Usuario.fromMap(map['alteradoPor'])
@@ -78,6 +99,9 @@ class ProcessoProdutivo {
       'descricao': descricao,
       'empresaResponsavel': empresaResponsavel?.toMap(),
       'funcionario': funcionario == null ? null : {'id': funcionario!.id},
+      'funcionariosAdicionais': [
+        for (final item in funcionariosAdicionais) {'id': item.id},
+      ],
       'valorComissao': valorComissao,
       'dataInicio': dataInicio?.toIso8601String(),
       'dataFim': dataFim?.toIso8601String(),

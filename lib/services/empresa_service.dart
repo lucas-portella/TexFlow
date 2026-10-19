@@ -41,4 +41,38 @@ class EmpresaService {
 
     return Empresa.fromMap(decodificar(response));
   }
+
+  static Future<Empresa> atualizar({
+    required int id,
+    required String nomeFantasia,
+    required String cnpj,
+    required String contatoNome,
+    required String contatoTelefone,
+  }) async {
+    final response = await http.put(
+      Uri.parse('${ApiConfig.baseUrl}/api/empresas/$id'),
+      headers: cabecalhosJson,
+      body: jsonEncode({
+        'nomeFantasia': nomeFantasia,
+        'cnpj': cnpj,
+        'contato': {'nome': contatoNome, 'telefone': contatoTelefone},
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(mensagemDeErro(response, 'Erro ao alterar o cliente'));
+    }
+
+    return Empresa.fromMap(decodificar(response));
+  }
+
+  static Future<void> excluir(int id) async {
+    final response = await http.delete(
+      Uri.parse('${ApiConfig.baseUrl}/api/empresas/$id'),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(mensagemDeErro(response, 'Erro ao excluir o cliente'));
+    }
+  }
 }

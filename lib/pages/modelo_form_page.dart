@@ -5,6 +5,7 @@ import 'package:texflow/models/referencia.dart';
 import 'package:texflow/providers/etapa_provider.dart';
 import 'package:texflow/providers/modelo_provider.dart';
 import 'package:texflow/routes/app_routes.dart';
+import 'package:texflow/shared/etapa_form_sheet.dart';
 import 'package:texflow/shared/app_card.dart';
 import 'package:texflow/shared/app_colors.dart';
 import 'package:texflow/shared/app_primary_button.dart';
@@ -53,15 +54,32 @@ class _ModeloFormPageState extends State<ModeloFormPage> {
         .where((etapa) => !_etapas.any((escolhida) => escolhida.id == etapa.id))
         .toList();
 
+    var cadastrarEtapa = false;
+
     final escolhida = await showModalBottomSheet<Etapa>(
       context: context,
       builder: (context) {
+        void pedirCadastro() {
+          cadastrarEtapa = true;
+          Navigator.pop(context);
+        }
+
         if (disponiveis.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.all(32),
-            child: Text(
-              'Nenhuma etapa disponível. Cadastre novas etapas no menu Etapas.',
-              textAlign: TextAlign.center,
+          return Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Não há etapas cadastradas.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                FilledButton(
+                  onPressed: pedirCadastro,
+                  child: const Text('Cadastrar etapa'),
+                ),
+              ],
             ),
           );
         }
@@ -76,12 +94,26 @@ class _ModeloFormPageState extends State<ModeloFormPage> {
                 trailing: Text(formatarMoeda(etapa.valorComissao)),
                 onTap: () => Navigator.pop(context, etapa),
               ),
+            ListTile(
+              leading: const Icon(Icons.add),
+              title: const Text('Cadastrar etapa'),
+              onTap: pedirCadastro,
+            ),
           ],
         );
       },
     );
 
-    if (escolhida != null) setState(() => _etapas.add(escolhida));
+    if (escolhida != null) {
+      setState(() => _etapas.add(escolhida));
+      return;
+    }
+
+    if (!cadastrarEtapa || !mounted) return;
+    final etapas = context.read<EtapaProvider>();
+    await EtapaFormSheet.abrir(context);
+    await etapas.carregar();
+    if (mounted) await _escolherEtapa();
   }
 
   void _reordenar(int antigo, int novo) {
@@ -96,13 +128,6 @@ class _ModeloFormPageState extends State<ModeloFormPage> {
     final provider = context.read<ModeloProvider>();
 
     if (!_formKey.currentState!.validate()) return;
-
-    if (_etapas.isEmpty) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Adicione ao menos uma etapa')),
-      );
-      return;
-    }
 
     setState(() => _carregando = true);
 
@@ -178,7 +203,7 @@ class _ModeloFormPageState extends State<ModeloFormPage> {
                 padding: EdgeInsets.symmetric(vertical: 24),
                 child: Center(
                   child: Text(
-                    'Nenhuma etapa escolhida',
+                    'Nenhuma etapa escolhida (opcional)',
                     style: TextStyle(color: AppColors.muted),
                   ),
                 ),

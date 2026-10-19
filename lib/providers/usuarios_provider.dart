@@ -48,24 +48,27 @@ class UsuariosProvider extends ChangeNotifier {
     await carregar();
   }
 
-  Future<void> atualizar(
+  Future<String?> atualizar(
     Usuario usuario, {
     required String nome,
     required String email,
     String? cargo,
     UserType? tipo,
     Set<Modulo>? modulos,
+    String? novaSenha,
   }) async {
-    await UsuarioService.atualizar(
+    final atualizado = await UsuarioService.atualizar(
       id: usuario.idUsuario,
       nome: nome,
       email: email,
       cargo: cargo,
       tipo: tipo,
+      novaSenha: novaSenha,
     );
     if (modulos != null) {
       await UsuarioService.alterarModulos(usuario.idUsuario, modulos);
     }
     await carregar();
+    return atualizado.token;
   }
 }

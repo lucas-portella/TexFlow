@@ -115,13 +115,14 @@ class FakeUsuariosProvider extends UsuariosProvider {
   }
 
   @override
-  Future<void> atualizar(
+  Future<String?> atualizar(
     Usuario usuario, {
     required String nome,
     required String email,
     String? cargo,
     UserType? tipo,
     Set<Modulo>? modulos,
+    String? novaSenha,
   }) async {
     atualizacoes.add({
       'id': usuario.idUsuario,
@@ -130,7 +131,9 @@ class FakeUsuariosProvider extends UsuariosProvider {
       'cargo': cargo,
       'tipo': tipo,
       'modulos': modulos,
+      'novaSenha': novaSenha,
     });
+    return null;
   }
 }
 

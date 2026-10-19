@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:texflow/models/empresa.dart';
 import 'package:texflow/routes/app_routes.dart';
 import 'package:texflow/services/empresa_service.dart';
 import 'package:texflow/shared/app_card.dart';
@@ -10,7 +11,9 @@ import 'package:texflow/shared/section_title.dart';
 import 'package:texflow/shared/validators.dart';
 
 class CadastroEmpresaPage extends StatefulWidget {
-  const CadastroEmpresaPage({super.key});
+  final Empresa? empresa;
+
+  const CadastroEmpresaPage({super.key, this.empresa});
 
   static const route = AppRoutes.novaEmpresa;
 
@@ -20,11 +23,19 @@ class CadastroEmpresaPage extends StatefulWidget {
 
 class _CadastroEmpresaPageState extends State<CadastroEmpresaPage> {
   final _formKey = GlobalKey<FormState>();
-  final _nomeController = TextEditingController();
-  final _cnpjController = TextEditingController();
-  final _responsavelController = TextEditingController();
-  final _telefoneController = TextEditingController();
+  late final _nomeController = TextEditingController(
+    text: widget.empresa?.nomeFantasia,
+  );
+  late final _cnpjController = TextEditingController(text: widget.empresa?.cnpj);
+  late final _responsavelController = TextEditingController(
+    text: widget.empresa?.contatoNome,
+  );
+  late final _telefoneController = TextEditingController(
+    text: widget.empresa?.contatoTelefone,
+  );
   bool _carregando = false;
+
+  bool get _editando => widget.empresa != null;
 
   @override
   void dispose() {
@@ -43,16 +54,32 @@ class _CadastroEmpresaPageState extends State<CadastroEmpresaPage> {
     setState(() => _carregando = true);
 
     try {
-      await EmpresaService.criar(
-        nomeFantasia: _nomeController.text.trim(),
-        cnpj: _cnpjController.text,
-        contatoNome: _responsavelController.text.trim(),
-        contatoTelefone: _telefoneController.text,
-      );
+      if (_editando) {
+        await EmpresaService.atualizar(
+          id: widget.empresa!.id,
+          nomeFantasia: _nomeController.text.trim(),
+          cnpj: _cnpjController.text,
+          contatoNome: _responsavelController.text.trim(),
+          contatoTelefone: _telefoneController.text,
+        );
+      } else {
+        await EmpresaService.criar(
+          nomeFantasia: _nomeController.text.trim(),
+          cnpj: _cnpjController.text,
+          contatoNome: _responsavelController.text.trim(),
+          contatoTelefone: _telefoneController.text,
+        );
+      }
 
       if (!mounted) return;
       messenger.showSnackBar(
-        const SnackBar(content: Text('Cliente cadastrado com sucesso')),
+        SnackBar(
+          content: Text(
+            _editando
+                ? 'Cliente atualizado com sucesso'
+                : 'Cliente cadastrado com sucesso',
+          ),
+        ),
       );
       Navigator.pop(context);
     } catch (e) {
@@ -68,7 +95,9 @@ class _CadastroEmpresaPageState extends State<CadastroEmpresaPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.screenBackground,
-      appBar: const ApplicationAppBar(title: 'Cadastrar cliente'),
+      appBar: ApplicationAppBar(
+        title: _editando ? 'Alterar cliente' : 'Cadastrar cliente',
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -133,7 +162,7 @@ class _CadastroEmpresaPageState extends State<CadastroEmpresaPage> {
                 ),
               ),
               AppPrimaryButton(
-                label: 'Cadastrar cliente',
+                label: _editando ? 'Salvar' : 'Cadastrar cliente',
                 carregando: _carregando,
                 onPressed: _cadastrar,
               ),

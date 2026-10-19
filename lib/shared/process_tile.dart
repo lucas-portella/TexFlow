@@ -25,7 +25,7 @@ class ProcessTile extends StatelessWidget {
 
   String get _responsavel {
     final nome =
-        processo.funcionario?.nome ??
+        (processo.funcionarios.isEmpty ? null : processo.nomesDosResponsaveis) ??
         processo.empresaResponsavel?.nomeFantasia ??
         'Sem responsável';
     final valor = processo.valorComissao;

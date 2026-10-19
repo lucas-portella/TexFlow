@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:texflow/models/item_grade.dart';
+import 'package:texflow/models/operacao.dart';
 import 'package:texflow/models/processo_produtivo.dart';
 import 'package:texflow/providers/funcionario_provider.dart';
+import 'package:texflow/shared/escolher_responsaveis_sheet.dart';
 import 'package:texflow/providers/modelo_provider.dart';
+import 'package:texflow/routes/app_routes.dart';
 import 'package:texflow/providers/new_operation_page_provider.dart';
 import 'package:texflow/shared/app_colors.dart';
 import 'package:texflow/shared/adicionar_etapa_sheet.dart';
@@ -20,7 +23,9 @@ const cinza = Color(0xFF8A8A94);
 const vermelho = Color(0xFFE5484D);
 
 class NovoPedidoPage extends StatefulWidget {
-  const NovoPedidoPage({super.key});
+  final Operacao? operacao;
+
+  const NovoPedidoPage({super.key, this.operacao});
 
   @override
   State<NovoPedidoPage> createState() => _NovoPedidoPageState();
@@ -36,18 +41,43 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<NewOperationPageProvider>().limpar();
+      _preencher();
       context.read<ModeloProvider>().carregar();
       context.read<FuncionarioProvider>().carregar();
     });
   }
 
+  void _preencher() {
+    final controller = context.read<NewOperationPageProvider>();
+    final pedido = widget.operacao;
+
+    if (pedido == null) {
+      controller.limpar();
+      return;
+    }
+
+    controller.carregarParaEdicao(pedido);
+    numeroController.text = controller.numero;
+    valorPeca.text = controller.valorPeca == null
+        ? ''
+        : controller.valorPeca!.toStringAsFixed(2).replaceAll('.', ',');
+    quantidade.text = controller.quantidadeSolicitada?.toString() ?? '';
+    final entrega = controller.dataEntrega;
+    data.text = entrega == null ? '' : _formatarData(entrega);
+  }
+
+  String _formatarData(DateTime d) {
+    return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+  }
+
   Future<void> escolherData(BuildContext context) async {
     final hoje = DateTime.now();
+    final atual = context.read<NewOperationPageProvider>().dataEntrega;
+    final inicio = atual != null && atual.isBefore(hoje) ? atual : hoje;
     final d = await showDatePicker(
       context: context,
-      initialDate: hoje,
-      firstDate: hoje,
+      initialDate: atual ?? hoje,
+      firstDate: inicio,
       lastDate: DateTime(hoje.year + 5),
     );
 
@@ -55,8 +85,7 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
     final controller = context.read<NewOperationPageProvider>();
 
     controller.updateDataEntrega(d);
-    data.text =
-        '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+    data.text = _formatarData(d);
   }
 
   Future<void> criarPedido() async {
@@ -65,9 +94,20 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
     final controller = context.read<NewOperationPageProvider>();
 
     try {
-      await controller.criarPedido();
+      final editando = controller.editando;
+      if (editando) {
+        await controller.salvarEdicao();
+      } else {
+        await controller.criarPedido();
+      }
       messenger.showSnackBar(
-        const SnackBar(content: Text('Pedido criado com sucesso')),
+        SnackBar(
+          content: Text(
+            editando
+                ? 'Pedido atualizado com sucesso'
+                : 'Pedido criado com sucesso',
+          ),
+        ),
       );
       navigator.pop(true);
     } catch (e) {
@@ -124,8 +164,10 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Text(
-                                  'Criar pedido',
+                              : Text(
+                                  controller.editando
+                                      ? 'Salvar alterações'
+                                      : 'Criar pedido',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
@@ -164,9 +206,9 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
             ),
           ),
           const SizedBox(width: 14),
-          const Text(
-            'Novo Pedido',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          Text(
+            widget.operacao == null ? 'Novo Pedido' : 'Alterar Pedido',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -367,6 +409,18 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
     );
   }
 
+  Future<void> cadastrarModelo() async {
+    final modelos = context.read<ModeloProvider>();
+    final controller = context.read<NewOperationPageProvider>();
+    final antes = modelos.modelos.map((item) => item.id).toSet();
+
+    await Navigator.pushNamed(context, AppRoutes.modeloForm);
+    await modelos.carregar();
+
+    final novos = modelos.ativos.where((item) => !antes.contains(item.id));
+    if (novos.isNotEmpty) controller.setModelo(novos.last);
+  }
+
   Future<void> escolherModelo(BuildContext context) {
     return showModalBottomSheet(
       context: context,
@@ -381,11 +435,24 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
             }
 
             if (provider.ativos.isEmpty) {
-              return const Padding(
-                padding: EdgeInsets.all(32),
-                child: Text(
-                  'Nenhum modelo ativo. Cadastre ou ative no menu Modelos.',
-                  textAlign: TextAlign.center,
+              return Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Não há modelos cadastrados.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    FilledButton(
+                      onPressed: () {
+                        Navigator.pop(sheetContext);
+                        cadastrarModelo();
+                      },
+                      child: const Text('Cadastrar modelo'),
+                    ),
+                  ],
                 ),
               );
             }
@@ -405,6 +472,14 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
                       Navigator.pop(sheetContext);
                     },
                   ),
+                ListTile(
+                  leading: const Icon(Icons.add),
+                  title: const Text('Cadastrar modelo'),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    cadastrarModelo();
+                  },
+                ),
               ],
             );
           },
@@ -416,64 +491,16 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
   Future<void> escolherResponsavel(
     BuildContext context,
     ProcessoProdutivo processo,
-  ) {
-    return showModalBottomSheet(
-      context: context,
-      builder: (sheetContext) {
-        return Consumer<FuncionarioProvider>(
-          builder: (_, provider, child) {
-            if (provider.carregando && provider.funcionarios.isEmpty) {
-              return const Padding(
-                padding: EdgeInsets.all(32),
-                child: Center(child: CircularProgressIndicator()),
-              );
-            }
-
-            if (provider.ativos.isEmpty) {
-              return const Padding(
-                padding: EdgeInsets.all(32),
-                child: Text(
-                  'Nenhum funcionário ativo. Cadastre no menu Funcionários.',
-                  textAlign: TextAlign.center,
-                ),
-              );
-            }
-
-            return ListView(
-              shrinkWrap: true,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 4, 24, 8),
-                  child: Text(
-                    'Responsável pela etapa ${processo.descricao}',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                for (final funcionario in provider.ativos)
-                  ListTile(
-                    leading: const Icon(Icons.person_outline),
-                    title: Text(funcionario.nome),
-                    subtitle: funcionario.cargo == null
-                        ? null
-                        : Text(funcionario.cargo!),
-                    onTap: () {
-                      context.read<NewOperationPageProvider>().setResponsavel(
-                        processo,
-                        funcionario,
-                      );
-                      Navigator.pop(sheetContext);
-                    },
-                  ),
-              ],
-            );
-          },
-        );
-      },
+  ) async {
+    final controller = context.read<NewOperationPageProvider>();
+    final escolhidos = await escolherResponsaveis(
+      context,
+      titulo: 'Responsáveis pela etapa ${processo.descricao}',
+      selecionados: processo.funcionarios,
     );
+    if (escolhidos == null) return;
+
+    controller.setResponsaveis(processo, escolhidos);
   }
 
   Future<void> alterarValor(
@@ -504,6 +531,8 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
           TextField(
             controller: numeroController,
             onChanged: controller.setNumero,
+            enabled: !(controller.editando &&
+                (controller.emEdicao?.numero ?? '').isNotEmpty),
             decoration: decoracao('Ex.: 4521', icone: Icons.tag),
           ),
           rotulo('VALOR DA PEÇA (R\$)'),
@@ -533,15 +562,51 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
             aoTocar: () => escolherModelo(context),
           ),
           if (modelo == null)
-            const Padding(
-              padding: EdgeInsets.only(top: 12),
-              child: Text(
-                'Ao escolher o modelo, as etapas aparecem aqui.',
-                style: TextStyle(color: cinza, fontSize: 13),
-              ),
+            Builder(
+              builder: (context) {
+                final modelos = context.watch<ModeloProvider>();
+                final semModelos =
+                    !modelos.carregando && modelos.ativos.isEmpty;
+
+                if (semModelos) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Não há modelos cadastrados.',
+                            style: TextStyle(color: cinza, fontSize: 13),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: cadastrarModelo,
+                          child: const Text('Cadastrar modelo'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return const Padding(
+                  padding: EdgeInsets.only(top: 12),
+                  child: Text(
+                    'Ao escolher o modelo, as etapas aparecem aqui.',
+                    style: TextStyle(color: cinza, fontSize: 13),
+                  ),
+                );
+              },
             )
           else ...[
             rotulo('ETAPAS'),
+            if (controller.processos.isEmpty)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 4),
+                child: Text(
+                  'Este modelo não tem etapas. Adicione abaixo.',
+                  style: TextStyle(color: cinza, fontSize: 13),
+                ),
+              ),
             for (final processo in controller.processos) itemProcesso(processo),
             Padding(
               padding: const EdgeInsets.only(top: 4),
@@ -622,7 +687,7 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
   Widget itemProcesso(ProcessoProdutivo processo) {
     return Consumer<NewOperationPageProvider>(
       builder: (context, controller, child) {
-        final funcionario = processo.funcionario;
+        final responsaveis = processo.funcionarios;
 
         return Container(
           margin: const EdgeInsets.only(top: 12),
@@ -661,7 +726,7 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
                       child: Icon(Icons.edit_outlined, size: 16, color: roxo),
                     ),
                   ),
-                  if (controller.ehEtapaExtra(processo))
+                  if (controller.podeRemoverEtapa(processo))
                     InkWell(
                       onTap: () => controller.removerEtapaExtra(processo),
                       borderRadius: BorderRadius.circular(10),
@@ -682,8 +747,8 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: funcionario == null ? roxo : Colors.white,
-                    border: funcionario == null
+                    color: responsaveis.isEmpty ? roxo : Colors.white,
+                    border: responsaveis.isEmpty
                         ? null
                         : Border.all(color: borda),
                     borderRadius: BorderRadius.circular(10),
@@ -693,14 +758,16 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
                       Icon(
                         Icons.person_outline,
                         size: 18,
-                        color: funcionario == null ? Colors.white : cinza,
+                        color: responsaveis.isEmpty ? Colors.white : cinza,
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          funcionario?.nome ?? 'Selecionar responsável',
+                          responsaveis.isEmpty
+                              ? 'Selecionar responsável'
+                              : processo.nomesDosResponsaveis,
                           style: TextStyle(
-                            color: funcionario == null
+                            color: responsaveis.isEmpty
                                 ? Colors.white
                                 : Colors.black,
                             fontWeight: FontWeight.w600,
