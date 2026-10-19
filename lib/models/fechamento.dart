@@ -22,6 +22,7 @@ class RepasseEtapa {
 
 class RepasseOperacao {
   int operacaoId;
+  String? numero;
   String? cliente;
   int quantidade;
   double total;
@@ -29,15 +30,22 @@ class RepasseOperacao {
 
   RepasseOperacao({
     required this.operacaoId,
+    this.numero,
     this.cliente,
     required this.quantidade,
     required this.total,
     required this.etapas,
   });
 
+  String get codigo {
+    final texto = numero?.trim();
+    return 'OP-${texto == null || texto.isEmpty ? operacaoId : texto}';
+  }
+
   factory RepasseOperacao.fromMap(Map<String, dynamic> map) {
     return RepasseOperacao(
       operacaoId: map['operacaoId'] ?? 0,
+      numero: map['numero'],
       cliente: map['cliente'],
       quantidade: map['quantidade'] ?? 0,
       total: (map['total'] as num?)?.toDouble() ?? 0,

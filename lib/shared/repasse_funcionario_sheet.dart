@@ -42,7 +42,7 @@ class RepasseFuncionarioSheet extends StatelessWidget {
             const SizedBox(height: 20),
             for (final operacao in repasse.operacoes) ...[
               Text(
-                'OP-${operacao.operacaoId}'
+                '${operacao.codigo}'
                 '${operacao.cliente == null ? '' : ' · ${operacao.cliente}'}',
                 style: const TextStyle(fontWeight: FontWeight.w800),
               ),
