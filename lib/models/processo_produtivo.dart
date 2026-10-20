@@ -9,6 +9,7 @@ class ProcessoProdutivo {
   Empresa? empresaResponsavel; // Empresa responsável pelo serviço
   Funcionario? funcionario; // Funcionário responsável pela etapa
   List<Funcionario> funcionariosAdicionais; // Demais funcionários da mesma etapa
+  Map<int, int> quantidades; // Peças de cada responsável nesta etapa
   double? valorComissao; // Comissão por peça paga ao funcionário
   DateTime? dataInicio; // Data de início da operação
   DateTime? dataFim; // Data de fim da operação
@@ -21,13 +22,15 @@ class ProcessoProdutivo {
     this.empresaResponsavel,
     this.funcionario,
     List<Funcionario>? funcionariosAdicionais,
+    Map<int, int>? quantidades,
     this.valorComissao,
     this.alteradoPor,
     this.dataFim,
     this.dataInicio,
     this.idProcessoProdutivo,
     this.status,
-  }) : funcionariosAdicionais = funcionariosAdicionais ?? [];
+  }) : funcionariosAdicionais = funcionariosAdicionais ?? [],
+       quantidades = quantidades ?? {};
 
   List<Funcionario> get funcionarios => [
     ?funcionario,
@@ -37,11 +40,25 @@ class ProcessoProdutivo {
   String get nomesDosResponsaveis =>
       funcionarios.map((item) => item.nome).join(', ');
 
+  String get responsaveisComPecas => funcionarios
+      .map(
+        (item) => quantidades.containsKey(item.id)
+            ? '${item.nome} (${quantidades[item.id]})'
+            : item.nome,
+      )
+      .join(', ');
+
+  List<Funcionario> get semQuantidade =>
+      funcionarios.where((item) => !quantidades.containsKey(item.id)).toList();
+
   void definirResponsaveis(List<Funcionario> escolhidos) {
     funcionario = escolhidos.isEmpty ? null : escolhidos.first;
     funcionariosAdicionais = escolhidos.length > 1
         ? escolhidos.sublist(1)
         : <Funcionario>[];
+    quantidades.removeWhere(
+      (id, _) => !escolhidos.any((item) => item.id == id),
+    );
   }
 
   void setStatus(Status novoStatus, Usuario usuario) {
@@ -78,6 +95,11 @@ class ProcessoProdutivo {
         for (final item in (map['funcionariosAdicionais'] as List? ?? []))
           Funcionario.fromMap(item as Map<String, dynamic>),
       ],
+      quantidades: {
+        for (final entrada
+            in (map['quantidades'] as Map<String, dynamic>? ?? {}).entries)
+          int.parse(entrada.key): (entrada.value as num).toInt(),
+      },
       valorComissao: (map['valorComissao'] as num?)?.toDouble(),
       alteradoPor: map['alteradoPor'] != null
           ? Usuario.fromMap(map['alteradoPor'])

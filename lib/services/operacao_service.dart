@@ -106,6 +106,30 @@ class OperacaoService {
     }
   }
 
+  static Future<Operacao> informarQuantidades({
+    required int processoId,
+    required Map<int, int> quantidades,
+  }) async {
+    final response = await http.put(
+      Uri.parse('${ApiConfig.baseUrl}/api/processos/$processoId/quantidades'),
+      headers: cabecalhosJson,
+      body: jsonEncode({
+        'quantidades': {
+          for (final entrada in quantidades.entries)
+            '${entrada.key}': entrada.value,
+        },
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        mensagemDeErro(response, 'Erro ao salvar as peças da etapa'),
+      );
+    }
+
+    return Operacao.fromMap(decodificar(response));
+  }
+
   static Future<Operacao> finalizar({
     required int operacaoId,
     required int quantidadeProduzida,

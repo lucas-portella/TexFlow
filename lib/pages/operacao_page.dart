@@ -18,6 +18,8 @@ import 'package:texflow/shared/grade_table.dart';
 import 'package:texflow/shared/operation_header.dart';
 import 'package:texflow/shared/operation_progress_card.dart';
 import 'package:texflow/shared/process_tile.dart';
+import 'package:texflow/shared/quantidades_da_etapa_sheet.dart';
+import 'package:texflow/shared/quantidades_pendentes_dialog.dart';
 import 'package:texflow/shared/section_title.dart';
 import 'package:texflow/shared/status_da_operacao_field.dart';
 
@@ -91,6 +93,22 @@ class _OperacaoPageState extends State<OperacaoPage> {
     }
   }
 
+  Future<void> _informarQuantidades(
+    OperacaoDetalheProvider provider,
+    ProcessoProdutivo processo,
+  ) async {
+    final id = processo.idProcessoProdutivo;
+    if (id == null) return;
+
+    final quantidades = await pedirQuantidadesDaEtapa(context, processo);
+    if (quantidades == null) return;
+
+    await _executar(
+      () => provider.informarQuantidades(id, quantidades),
+      sucesso: 'Peças salvas',
+    );
+  }
+
   Future<void> _finalizar(
     OperacaoDetalheProvider provider,
     Operacao operacao,
@@ -100,6 +118,17 @@ class _OperacaoPageState extends State<OperacaoPage> {
       sugestao: operacao.quantidadeSolicitada,
     );
     if (dados == null) return;
+
+    final pendencias = operacao.pendenciasDeQuantidade;
+    if (pendencias.isNotEmpty) {
+      if (!mounted) return;
+      final seguir = await confirmarQuantidadesPendentes(
+        context,
+        quantidade: dados.quantidade,
+        pendencias: pendencias,
+      );
+      if (!seguir) return;
+    }
 
     await _executar(
       () => provider.finalizar(dados.quantidade, dados.dataEntrega),
@@ -118,6 +147,12 @@ class _OperacaoPageState extends State<OperacaoPage> {
     }
 
     await _executar(() => provider.alterarStatus(status));
+  }
+
+  bool _podeInformarQuantidades(bool editavel, ProcessoProdutivo processo) {
+    return editavel &&
+        processo.idProcessoProdutivo != null &&
+        processo.funcionarios.isNotEmpty;
   }
 
   void _alternarSelecao(ProcessoProdutivo processo) {
@@ -250,6 +285,12 @@ class _OperacaoPageState extends State<OperacaoPage> {
                   if (modo == ModoOperacao.porEtapas)
                     ProcessTile(
                       processo: processo,
+                      aoInformarQuantidades: _podeInformarQuantidades(
+                        editavel,
+                        processo,
+                      )
+                          ? () => _informarQuantidades(provider, processo)
+                          : null,
                       selecionavel: editavel,
                       selecionado: selecionadas.contains(
                         processo.idProcessoProdutivo,
@@ -263,7 +304,16 @@ class _OperacaoPageState extends State<OperacaoPage> {
                           : () => _alternarSelecao(processo),
                     )
                   else
-                    ProcessTile(processo: processo, mostrarStatus: false),
+                    ProcessTile(
+                      processo: processo,
+                      mostrarStatus: false,
+                      aoInformarQuantidades: _podeInformarQuantidades(
+                        editavel,
+                        processo,
+                      )
+                          ? () => _informarQuantidades(provider, processo)
+                          : null,
+                    ),
                 if (editavel) ...[
                   const SizedBox(height: 4),
                   SizedBox(

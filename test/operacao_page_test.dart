@@ -142,6 +142,15 @@ class FakeDetalheProvider extends OperacaoDetalheProvider {
   final List<List<int>> etapasAtualizadas = [];
   final List<Status> statusDasEtapas = [];
   int excluidas = 0;
+  final List<Map<String, Object?>> quantidadesInformadas = [];
+
+  @override
+  Future<void> informarQuantidades(
+    int processoId,
+    Map<int, int> quantidades,
+  ) async {
+    quantidadesInformadas.add({'processo': processoId, 'quantidades': quantidades});
+  }
 
   @override
   Future<void> excluir() async {
@@ -219,6 +228,12 @@ Future<void> _abrir(
   await tester.pump();
 }
 
+Future<void> _confirmarPendencias(WidgetTester tester) async {
+  expect(find.text('Peças sem informar'), findsOneWidget);
+  await tester.tap(find.widgetWithText(TextButton, 'Concluir'));
+  await tester.pumpAndSettle();
+}
+
 Future<void> _escolherResponsaveis(
   WidgetTester tester,
   List<String> nomes,
@@ -234,6 +249,136 @@ Future<void> _escolherResponsaveis(
 }
 
 void main() {
+  group('peças por responsável na etapa', () {
+    Operacao pedido({bool preenchido = false, bool finalizado = false}) {
+      return Operacao.fromMap({
+        'id': 9,
+        'numero': '4521',
+        'status': 'emAndamento',
+        'dataFinalizacao': finalizado ? '2026-10-20' : null,
+        'gradePedido': [],
+        'gradeFabricada': [],
+        'processos': [
+          {
+            'id': 1,
+            'descricao': 'Final',
+            'status': 'concluido',
+            'valorComissao': 0.3,
+            'funcionario': {'id': 1, 'nome': 'João Costureiro'},
+            'funcionariosAdicionais': [
+              {'id': 2, 'nome': 'Maria Bordadeira'},
+            ],
+            'quantidades': preenchido ? {'1': 400, '2': 650} : <String, dynamic>{},
+          },
+        ],
+      });
+    }
+
+    testWidgets('a etapa mostra as peças de cada responsável', (tester) async {
+      await _abrir(
+        tester,
+        FakeDetalheProvider(operacao: pedido(preenchido: true)),
+        modo: ModoOperacao.porStatus,
+      );
+
+      expect(
+        find.textContaining('João Costureiro (400), Maria Bordadeira (650)'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('sem peças informadas aparecem só os nomes', (tester) async {
+      await _abrir(
+        tester,
+        FakeDetalheProvider(operacao: pedido()),
+        modo: ModoOperacao.porStatus,
+      );
+
+      expect(find.textContaining('João Costureiro, Maria Bordadeira'), findsOneWidget);
+      expect(find.textContaining('('), findsNothing);
+    });
+
+    testWidgets('informar as peças de cada pessoa e salvar', (tester) async {
+      final provider = FakeDetalheProvider(operacao: pedido());
+      await _abrir(tester, provider, modo: ModoOperacao.porStatus);
+
+      await tester.tap(find.byTooltip('Peças por responsável'));
+      await tester.pumpAndSettle();
+      expect(find.text('Peças por responsável'), findsWidgets);
+      expect(find.text('JOÃO COSTUREIRO'), findsOneWidget);
+      expect(find.text('MARIA BORDADEIRA'), findsOneWidget);
+
+      final campos = find.byType(TextField);
+      await tester.enterText(campos.at(0), '400');
+      await tester.enterText(campos.at(1), '');
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Salvar'));
+      await tester.pumpAndSettle();
+
+      expect(provider.quantidadesInformadas, [
+        {
+          'processo': 1,
+          'quantidades': {1: 400},
+        },
+      ]);
+      expect(find.text('Peças salvas'), findsOneWidget);
+    });
+
+    testWidgets('produção finalizada não deixa mexer nas peças', (tester) async {
+      await _abrir(
+        tester,
+        FakeDetalheProvider(operacao: pedido(preenchido: true, finalizado: true)),
+        modo: ModoOperacao.porStatus,
+      );
+
+      expect(find.byTooltip('Peças por responsável'), findsNothing);
+    });
+
+    testWidgets('ao concluir, avisa quem está sem peças e usa a quantidade final', (
+      tester,
+    ) async {
+      final provider = FakeDetalheProvider(operacao: pedido());
+      await _abrir(tester, provider);
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Concluir operação'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, '1000');
+      await tester.tap(find.text('Finalizar'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Peças sem informar'), findsOneWidget);
+      expect(find.textContaining('1000 peças informadas agora'), findsOneWidget);
+      expect(find.text('• Final · João Costureiro'), findsOneWidget);
+      expect(find.text('• Final · Maria Bordadeira'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(TextButton, 'Cancelar'));
+      await tester.pumpAndSettle();
+      expect(provider.finalizacoes, isEmpty);
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Concluir operação'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, '1000');
+      await tester.tap(find.text('Finalizar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, 'Concluir'));
+      await tester.pumpAndSettle();
+      expect(provider.finalizacoes, [1000]);
+    });
+
+    testWidgets('com todas as peças informadas conclui sem aviso', (tester) async {
+      final provider = FakeDetalheProvider(operacao: pedido(preenchido: true));
+      await _abrir(tester, provider);
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Concluir operação'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, '1050');
+      await tester.tap(find.text('Finalizar'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Peças sem informar'), findsNothing);
+      expect(provider.finalizacoes, [1050]);
+    });
+  });
+
   group('editar e excluir o pedido', () {
     Operacao pedido({
       String status = 'naoIniciado',
@@ -451,6 +596,7 @@ void main() {
     await tester.enterText(find.byType(TextField).last, '110');
     await tester.tap(find.text('Finalizar'));
     await tester.pumpAndSettle();
+    await _confirmarPendencias(tester);
 
     expect(provider.finalizacoes, [110]);
     expect(find.text('Produção finalizada'), findsOneWidget);
@@ -491,6 +637,7 @@ void main() {
     await tester.enterText(find.byType(TextField).last, '100');
     await tester.tap(find.text('Finalizar'));
     await tester.pumpAndSettle();
+    await _confirmarPendencias(tester);
 
     expect(provider.finalizacoes, [100]);
     expect(provider.statusEscolhidos, isEmpty);
@@ -542,6 +689,7 @@ void main() {
     await tester.enterText(find.byType(TextField).last, '95');
     await tester.tap(find.text('Finalizar'));
     await tester.pumpAndSettle();
+    await _confirmarPendencias(tester);
 
     expect(provider.finalizacoes, [95]);
     expect(provider.datasDeEntrega.single.year, hoje.year);

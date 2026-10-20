@@ -95,6 +95,7 @@ class NewOperationPageProvider extends ChangeNotifier {
       empresaResponsavel: original.empresaResponsavel,
       funcionario: original.funcionario,
       funcionariosAdicionais: List.of(original.funcionariosAdicionais),
+      quantidades: Map.of(original.quantidades),
       valorComissao: original.valorComissao,
       status: original.status,
       dataInicio: original.dataInicio,

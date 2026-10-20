@@ -70,6 +70,13 @@ class Operacao {
 
   bool get editavel => !finalizada && status != Status.cancelado;
 
+  List<String> get pendenciasDeQuantidade => [
+    for (final processo in processos)
+      if (processo.status != Status.cancelado)
+        for (final funcionario in processo.semQuantidade)
+          '${processo.descricao} · ${funcionario.nome}',
+  ];
+
   bool get nenhumaEtapaIniciada => processos.every(
     (processo) => (processo.status ?? Status.naoIniciado) == Status.naoIniciado,
   );
