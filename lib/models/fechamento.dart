@@ -3,11 +3,13 @@ import 'package:texflow/models/custo.dart';
 class RepasseEtapa {
   String etapa;
   double valorPorPeca;
+  int? quantidade;
   double total;
 
   RepasseEtapa({
     required this.etapa,
     required this.valorPorPeca,
+    this.quantidade,
     required this.total,
   });
 
@@ -15,6 +17,7 @@ class RepasseEtapa {
     return RepasseEtapa(
       etapa: map['etapa'] ?? '',
       valorPorPeca: (map['valorPorPeca'] as num?)?.toDouble() ?? 0,
+      quantidade: (map['quantidade'] as num?)?.toInt(),
       total: (map['total'] as num?)?.toDouble() ?? 0,
     );
   }

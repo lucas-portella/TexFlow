@@ -13,6 +13,7 @@ class ProcessTile extends StatelessWidget {
   final bool selecionavel;
   final bool selecionado;
   final VoidCallback? onTap;
+  final VoidCallback? aoInformarQuantidades;
 
   const ProcessTile({
     super.key,
@@ -21,11 +22,12 @@ class ProcessTile extends StatelessWidget {
     this.selecionavel = false,
     this.selecionado = false,
     this.onTap,
+    this.aoInformarQuantidades,
   });
 
   String get _responsavel {
     final nome =
-        (processo.funcionarios.isEmpty ? null : processo.nomesDosResponsaveis) ??
+        (processo.funcionarios.isEmpty ? null : processo.responsaveisComPecas) ??
         processo.empresaResponsavel?.nomeFantasia ??
         'Sem responsável';
     final valor = processo.valorComissao;
@@ -106,6 +108,15 @@ class ProcessTile extends StatelessWidget {
                   ],
                 ),
               ),
+              if (aoInformarQuantidades != null)
+                IconButton(
+                  tooltip: 'Peças por responsável',
+                  onPressed: aoInformarQuantidades,
+                  icon: const Icon(
+                    Icons.edit_note,
+                    color: AppColors.primary,
+                  ),
+                ),
               if (mostrarStatus) StatusBadge(status: status),
             ],
           ),

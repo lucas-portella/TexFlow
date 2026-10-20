@@ -43,6 +43,17 @@ class OperacaoDetalheProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> informarQuantidades(
+    int processoId,
+    Map<int, int> quantidades,
+  ) async {
+    _operacao = await OperacaoService.informarQuantidades(
+      processoId: processoId,
+      quantidades: quantidades,
+    );
+    notifyListeners();
+  }
+
   Future<void> excluir() async {
     final operacao = _operacao;
     if (operacao == null) return;

@@ -58,7 +58,7 @@ class RepasseFuncionarioSheet extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          '${etapa.etapa} · ${formatarMoeda(etapa.valorPorPeca)} × ${operacao.quantidade}',
+                          '${etapa.etapa} · ${formatarMoeda(etapa.valorPorPeca)} × ${etapa.quantidade ?? operacao.quantidade}',
                           style: const TextStyle(fontSize: 13),
                         ),
                       ),
