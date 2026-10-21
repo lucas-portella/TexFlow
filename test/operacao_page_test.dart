@@ -738,6 +738,27 @@ void main() {
       ]);
     });
 
+    testWidgets('escolha de responsável e cores pode ser fechada sem salvar', (
+      tester,
+    ) async {
+      final provider = FakeDetalheProvider(
+        operacao: pedidoSemResponsavel(comCores: true),
+      );
+      await _abrir(tester, provider);
+
+      await tester.tap(find.text('Adicionar responsável'));
+      await tester.pumpAndSettle();
+      expect(find.text('Responsável e cores'), findsOneWidget);
+      final altura = tester.getSize(find.byType(BottomSheet)).height;
+      expect(altura, lessThanOrEqualTo(2400 * 0.81));
+
+      await tester.tap(find.byTooltip('Fechar'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Responsável e cores'), findsNothing);
+      expect(provider.responsaveisDefinidos, isEmpty);
+    });
+
     testWidgets('pedido finalizado não oferece o botão', (tester) async {
       await _abrir(
         tester,

@@ -1,26 +1,43 @@
-const paletaDeCores = <String>[
-  '#FFFFFF',
-  '#F2EDE0',
-  '#D9C3A0',
-  '#C0C4CC',
-  '#8A8D93',
-  '#111111',
-  '#E5252A',
-  '#7A1F3D',
-  '#F78FB3',
-  '#FF7F50',
-  '#FF8A00',
-  '#FFD600',
-  '#C9A227',
-  '#7B4B2A',
-  '#A7C957',
-  '#2EAD5B',
-  '#5A6B3C',
-  '#1ABC9C',
-  '#00A8E8',
-  '#1E66F5',
-  '#1B2A5C',
-  '#6C3BC9',
-  '#B79CED',
-  '#9D4EDD',
-];
+import 'package:flutter/material.dart';
+
+const colunasDaPaleta = 10;
+
+String hexDaCor(Color cor) {
+  final valor = cor.toARGB32() & 0xFFFFFF;
+  return '#${valor.toRadixString(16).padLeft(6, '0').toUpperCase()}';
+}
+
+List<String> _gerarPaleta() {
+  const tonsDeCinza = [
+    1.0, 0.89, 0.78, 0.67, 0.56, 0.45, 0.34, 0.23, 0.12, 0.0, //
+  ];
+  const matizes = [
+    0.0,
+    25.0,
+    48.0,
+    95.0,
+    150.0,
+    175.0,
+    200.0,
+    225.0,
+    270.0,
+    320.0,
+  ];
+  const variacoes = [
+    (0.25, 1.0),
+    (0.55, 1.0),
+    (1.0, 1.0),
+    (1.0, 0.7),
+    (1.0, 0.45),
+  ];
+
+  return [
+    for (final valor in tonsDeCinza)
+      hexDaCor(HSVColor.fromAHSV(1, 0, 0, valor).toColor()),
+    for (final (saturacao, valor) in variacoes)
+      for (final matiz in matizes)
+        hexDaCor(HSVColor.fromAHSV(1, matiz, saturacao, valor).toColor()),
+  ];
+}
+
+final paletaDeCores = _gerarPaleta();

@@ -86,95 +86,130 @@ class _EscolherResponsavelECoresState
     final pronto = _funcionario != null && _ids.isNotEmpty;
 
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.8,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              widget.fixo == null
-                  ? 'Responsável e cores'
-                  : 'Cores de ${widget.fixo!.nome}',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 12, 8, 0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.fixo == null
+                          ? 'Responsável e cores'
+                          : 'Cores de ${widget.fixo!.nome}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Fechar',
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
-            if (widget.fixo == null)
-              if (disponiveis.isEmpty)
-                Row(
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 4, 24, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Expanded(child: Text('Não há funcionários ativos.')),
-                    TextButton(
-                      onPressed: () => FuncionarioFormSheet.abrir(context),
-                      child: const Text('Cadastrar funcionário'),
+                    if (widget.fixo == null)
+                      if (disponiveis.isEmpty)
+                        Row(
+                          children: [
+                            const Expanded(
+                              child: Text('Não há funcionários ativos.'),
+                            ),
+                            TextButton(
+                              onPressed: () =>
+                                  FuncionarioFormSheet.abrir(context),
+                              child: const Text('Cadastrar funcionário'),
+                            ),
+                          ],
+                        )
+                      else
+                        DropdownButtonFormField<int>(
+                          initialValue:
+                              disponiveis.any(
+                                (item) => item.id == _funcionario?.id,
+                              )
+                              ? _funcionario?.id
+                              : null,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Funcionário',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: [
+                            for (final funcionario in disponiveis)
+                              DropdownMenuItem(
+                                value: funcionario.id,
+                                child: Text(funcionario.nome),
+                              ),
+                          ],
+                          onChanged: (id) => setState(() {
+                            _funcionario = disponiveis.firstWhere(
+                              (item) => item.id == id,
+                            );
+                          }),
+                        ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'COR',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.muted,
+                      ),
+                    ),
+                    for (final cor in cores)
+                      CheckboxListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        value: _ids.contains(cor.id),
+                        onChanged: (marcada) => setState(() {
+                          if (marcada ?? false) {
+                            _ids.add(cor.id);
+                          } else {
+                            _ids.remove(cor.id);
+                          }
+                        }),
+                        title: Row(
+                          children: [
+                            CorQuadradinho(cor: cor, tamanho: 18),
+                            const SizedBox(width: 10),
+                            Expanded(child: Text(cor.nome)),
+                          ],
+                        ),
+                      ),
+                    ListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.add),
+                      title: const Text('Cadastrar cor'),
+                      onTap: () => CorFormSheet.abrir(context),
                     ),
                   ],
-                )
-              else
-                DropdownButtonFormField<int>(
-                  initialValue:
-                      disponiveis.any((item) => item.id == _funcionario?.id)
-                      ? _funcionario?.id
-                      : null,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Funcionário',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: [
-                    for (final funcionario in disponiveis)
-                      DropdownMenuItem(
-                        value: funcionario.id,
-                        child: Text(funcionario.nome),
-                      ),
-                  ],
-                  onChanged: (id) => setState(() {
-                    _funcionario = disponiveis.firstWhere(
-                      (item) => item.id == id,
-                    );
-                  }),
-                ),
-            const SizedBox(height: 12),
-            const Text(
-              'COR',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: AppColors.muted,
-              ),
-            ),
-            for (final cor in cores)
-              CheckboxListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                controlAffinity: ListTileControlAffinity.leading,
-                value: _ids.contains(cor.id),
-                onChanged: (marcada) => setState(() {
-                  if (marcada ?? false) {
-                    _ids.add(cor.id);
-                  } else {
-                    _ids.remove(cor.id);
-                  }
-                }),
-                title: Row(
-                  children: [
-                    CorQuadradinho(cor: cor, tamanho: 18),
-                    const SizedBox(width: 10),
-                    Expanded(child: Text(cor.nome)),
-                  ],
                 ),
               ),
-            ListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.add),
-              title: const Text('Cadastrar cor'),
-              onTap: () => CorFormSheet.abrir(context),
             ),
-            const SizedBox(height: 8),
-            AppPrimaryButton(
-              label: pronto ? 'Confirmar (${_ids.length})' : 'Confirmar',
-              onPressed: pronto ? () => _confirmar(cores) : null,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+              child: AppPrimaryButton(
+                label: pronto ? 'Confirmar (${_ids.length})' : 'Confirmar',
+                onPressed: pronto ? () => _confirmar(cores) : null,
+              ),
             ),
           ],
         ),

@@ -21,7 +21,9 @@ import 'package:texflow/providers/new_operation_page_provider.dart';
 import 'package:texflow/providers/tamanho_provider.dart';
 import 'package:texflow/shared/cor_quadradinho.dart';
 import 'package:texflow/shared/etapa_form_sheet.dart';
+import 'package:texflow/shared/cor_form_sheet.dart';
 import 'package:texflow/shared/paleta_de_cores.dart';
+import 'package:texflow/shared/seletor_de_cor.dart';
 import 'package:texflow/shared/repasse_funcionario_sheet.dart';
 
 class _Cores extends CorProvider {
@@ -334,14 +336,83 @@ void main() {
       expect(cores.salvas, isEmpty);
 
       await tester.enterText(find.byType(TextFormField), 'Coral');
-      await tester.tap(find.byTooltip('#FF7F50'));
+      await tester.tap(find.byTooltip(paletaDeCores[22]));
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(ElevatedButton, 'Salvar'));
       await tester.pumpAndSettle();
 
       expect(cores.salvas, [
-        {'id': null, 'nome': 'Coral', 'hex': '#FF7F50'},
+        {'id': null, 'nome': 'Coral', 'hex': paletaDeCores[22]},
       ]);
+    });
+
+    testWidgets('dá para criar qualquer cor pelo código ou pelo seletor', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final cores = _Cores();
+      await tester.pumpWidget(
+        ChangeNotifierProvider<CorProvider>.value(
+          value: cores,
+          child: MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => TextButton(
+                  onPressed: () => CorFormSheet.abrir(context),
+                  child: const Text('abrir'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('abrir'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextFormField), 'Salmão');
+      expect(find.text('Código da cor'), findsNothing);
+      await tester.tap(find.text('Criar outra cor'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, 'ff7f50');
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Salvar'));
+      await tester.pumpAndSettle();
+      expect(cores.salvas.single['hex'], '#FF7F50');
+    });
+
+    testWidgets('arrastar no quadrado de tons muda a cor', (tester) async {
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      String? escolhida;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: SeletorDeCor(
+                hex: '#FF0000',
+                aoEscolher: (hex) => escolhida = hex,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Criar outra cor'));
+      await tester.pumpAndSettle();
+      final quadrado = find.byKey(const ValueKey('quadrado-de-tons'));
+      final canto = tester.getTopLeft(quadrado);
+      await tester.tapAt(canto + const Offset(0.01, 179.99));
+      await tester.pumpAndSettle();
+      expect(escolhida, '#000000');
+
+      await tester.tapAt(canto + const Offset(0.01, 0.01));
+      await tester.pumpAndSettle();
+      expect(escolhida, '#FFFFFF');
     });
 
     testWidgets('cores: editar abre preenchida e excluir pede confirmação', (

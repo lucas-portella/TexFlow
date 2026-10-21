@@ -5,7 +5,7 @@ import 'package:texflow/providers/cor_provider.dart';
 import 'package:texflow/shared/app_colors.dart';
 import 'package:texflow/shared/app_primary_button.dart';
 import 'package:texflow/shared/app_text_field.dart';
-import 'package:texflow/shared/paleta_de_cores.dart';
+import 'package:texflow/shared/seletor_de_cor.dart';
 import 'package:texflow/shared/validators.dart';
 
 class CorFormSheet extends StatefulWidget {
@@ -94,20 +94,12 @@ class _CorFormSheetState extends State<CorFormSheet> {
                   validarObrigatorio(valor, 'Informe o nome da cor'),
             ),
             const AppFieldLabel('QUADRADINHO'),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                for (final hex in paletaDeCores)
-                  _Amostra(
-                    hex: hex,
-                    selecionada: _hex == hex,
-                    aoTocar: () => setState(() {
-                      _hex = hex;
-                      _semQuadradinho = false;
-                    }),
-                  ),
-              ],
+            SeletorDeCor(
+              hex: _hex,
+              aoEscolher: (hex) => setState(() {
+                _hex = hex;
+                _semQuadradinho = false;
+              }),
             ),
             if (_semQuadradinho)
               const Text(
@@ -120,51 +112,6 @@ class _CorFormSheetState extends State<CorFormSheet> {
               onPressed: _salvar,
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Amostra extends StatelessWidget {
-  final String hex;
-  final bool selecionada;
-  final VoidCallback aoTocar;
-
-  const _Amostra({
-    required this.hex,
-    required this.selecionada,
-    required this.aoTocar,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cor = Cor.corDoHex(hex);
-    final claro = cor.computeLuminance() > 0.6;
-
-    return InkWell(
-      onTap: aoTocar,
-      borderRadius: BorderRadius.circular(8),
-      child: Tooltip(
-        message: hex,
-        child: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: cor,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: selecionada ? AppColors.primary : Colors.black26,
-              width: selecionada ? 3 : 1,
-            ),
-          ),
-          child: selecionada
-              ? Icon(
-                  Icons.check,
-                  size: 18,
-                  color: claro ? Colors.black87 : Colors.white,
-                )
-              : null,
         ),
       ),
     );
