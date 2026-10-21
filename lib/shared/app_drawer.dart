@@ -117,12 +117,25 @@ class AppDrawer extends StatelessWidget {
                   ),
                   if (cadastros.isNotEmpty) ...[
                     const _SecaoMenu('CADASTROS'),
-                    for (final modulo in cadastros)
+                    for (final modulo in cadastros) ...[
                       _ItemMenu(
                         icone: modulo.icone,
                         titulo: modulo.rotulo,
                         aoTocar: () => _abrir(context, modulo.rota),
                       ),
+                      if (modulo == Modulo.etapas) ...[
+                        _ItemMenu(
+                          icone: Icons.palette_outlined,
+                          titulo: 'Cores',
+                          aoTocar: () => _abrir(context, AppRoutes.cores),
+                        ),
+                        _ItemMenu(
+                          icone: Icons.straighten,
+                          titulo: 'Tamanhos',
+                          aoTocar: () => _abrir(context, AppRoutes.tamanhos),
+                        ),
+                      ],
+                    ],
                   ],
                   if (administrativo.isNotEmpty) ...[
                     const _SecaoMenu('ADMINISTRATIVO'),

@@ -77,7 +77,7 @@ void main() {
       expect(modelo.etapas.first.valorComissao, 0.3);
     });
 
-    test('valida os campos na ordem e exige o responsável de cada etapa', () {
+    test('valida os campos na ordem e não exige responsável ao criar', () {
       final provider = NewOperationPageProvider();
       expect(provider.validar(), 'Informe o número do pedido');
 
@@ -95,14 +95,10 @@ void main() {
       expect(provider.validar(), 'Informe a quantidade solicitada');
 
       provider.setQuantidadeSolicitada(1000);
-      expect(provider.validar(), 'Escolha o responsável da etapa Manga');
+      expect(provider.processos.every((item) => item.funcionario == null), isTrue);
+      expect(provider.validar(), isNull);
 
       provider.setResponsaveis(provider.processos[0], [
-        Funcionario(id: 1, nome: 'João'),
-      ]);
-      expect(provider.validar(), 'Escolha o responsável da etapa Gola');
-
-      provider.setResponsaveis(provider.processos[1], [
         Funcionario(id: 1, nome: 'João'),
       ]);
       expect(provider.validar(), isNull);
@@ -168,9 +164,10 @@ void main() {
 
     expect(find.text('Manga'), findsOneWidget);
     expect(find.text('Gola'), findsOneWidget);
-    expect(find.text('R\$ 0,30 por peça'), findsOneWidget);
-    expect(find.text('R\$ 0,50 por peça'), findsOneWidget);
-    expect(find.text('Selecionar responsável'), findsNWidgets(2));
+    expect(find.text('R\$ 0,30'), findsOneWidget);
+    expect(find.text('R\$ 0,50'), findsOneWidget);
+    expect(find.text('Adicionar responsável'), findsNWidgets(2));
+    expect(find.text('Selecionar responsável'), findsNothing);
 
     await tester.tap(find.byIcon(Icons.edit_outlined).first);
     await tester.pumpAndSettle();
@@ -178,9 +175,9 @@ void main() {
     await tester.enterText(find.byType(TextField).last, '0,45');
     await tester.tap(find.text('Salvar'));
     await tester.pumpAndSettle();
-    expect(find.text('R\$ 0,45 por peça'), findsOneWidget);
+    expect(find.text('R\$ 0,45'), findsOneWidget);
 
-    await tester.tap(find.text('Selecionar responsável').first);
+    await tester.tap(find.text('Adicionar responsável').first);
     await tester.pumpAndSettle();
     expect(find.text('Responsáveis pela etapa Manga'), findsOneWidget);
     expect(find.text('Maria Cortadora'), findsNothing);
@@ -190,6 +187,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('João Costureiro'), findsOneWidget);
-    expect(find.text('Selecionar responsável'), findsOneWidget);
+    expect(find.byTooltip('Remover João Costureiro'), findsOneWidget);
+    expect(find.text('Adicionar responsável'), findsNWidgets(2));
   });
 }

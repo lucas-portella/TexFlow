@@ -14,16 +14,21 @@ import 'package:texflow/services/operacao_service.dart';
 
 class NewOperationPageProvider extends ChangeNotifier {
   final Future<List<Etapa>> Function() _listarEtapas;
-  final Future<Etapa> Function(String nome, double valor) _cadastrarEtapa;
+  final Future<Etapa> Function(String nome, double valor, bool permiteCores)
+  _cadastrarEtapa;
 
   NewOperationPageProvider({
     Future<List<Etapa>> Function()? listarEtapas,
-    Future<Etapa> Function(String nome, double valor)? cadastrarEtapa,
+    Future<Etapa> Function(String nome, double valor, bool permiteCores)?
+    cadastrarEtapa,
   }) : _listarEtapas = listarEtapas ?? EtapaService.listar,
        _cadastrarEtapa =
            cadastrarEtapa ??
-           ((nome, valor) =>
-               EtapaService.salvar(nome: nome, valorComissao: valor));
+           ((nome, valor, permiteCores) => EtapaService.salvar(
+             nome: nome,
+             valorComissao: valor,
+             permiteCores: permiteCores,
+           ));
 
   String numero = '';
   Empresa? cliente;
@@ -96,6 +101,8 @@ class NewOperationPageProvider extends ChangeNotifier {
       funcionario: original.funcionario,
       funcionariosAdicionais: List.of(original.funcionariosAdicionais),
       quantidades: Map.of(original.quantidades),
+      permiteCores: original.permiteCores,
+      linhas: [for (final linha in original.linhas) linha.copia()],
       valorComissao: original.valorComissao,
       status: original.status,
       dataInicio: original.dataInicio,
@@ -133,6 +140,7 @@ class NewOperationPageProvider extends ChangeNotifier {
           (etapa) => ProcessoProdutivo(
             descricao: etapa.nome,
             valorComissao: etapa.valorComissao,
+            permiteCores: etapa.permiteCores,
             status: Status.naoIniciado,
           ),
         )
@@ -158,17 +166,24 @@ class NewOperationPageProvider extends ChangeNotifier {
           existente = etapa;
         }
       }
-      final etapa = existente ?? await _cadastrarEtapa(descricao, dados.valor);
+      final etapa =
+          existente ??
+          await _cadastrarEtapa(descricao, dados.valor, dados.permiteCores);
       descricao = etapa.nome;
     }
 
     final adicionada = ProcessoProdutivo(
       descricao: descricao,
       valorComissao: dados.valor,
-      funcionario: dados.funcionarios.first,
-      funcionariosAdicionais: dados.funcionarios.skip(1).toList(),
+      permiteCores: dados.permiteCores,
       status: Status.naoIniciado,
     );
+    if (dados.permiteCores) {
+      adicionada.linhas = [for (final linha in dados.linhas) linha.copia()];
+      adicionada.reagruparResponsaveis();
+    } else {
+      adicionada.definirResponsaveis(dados.funcionarios);
+    }
     _extras.add(adicionada);
     processos = [...processos, adicionada];
     notifyListeners();
@@ -178,7 +193,8 @@ class NewOperationPageProvider extends ChangeNotifier {
 
   bool podeRemoverEtapa(ProcessoProdutivo processo) {
     if (_extras.contains(processo)) return true;
-    return editando && (processo.status ?? Status.naoIniciado) == Status.naoIniciado;
+    return editando &&
+        (processo.status ?? Status.naoIniciado) == Status.naoIniciado;
   }
 
   void removerEtapaExtra(ProcessoProdutivo processo) {
@@ -195,6 +211,8 @@ class NewOperationPageProvider extends ChangeNotifier {
     processo.definirResponsaveis(funcionarios);
     notifyListeners();
   }
+
+  void atualizouEtapa() => notifyListeners();
 
   void alterarValorEtapa(ProcessoProdutivo processo, double valor) {
     processo.valorComissao = valor;
@@ -227,11 +245,6 @@ class NewOperationPageProvider extends ChangeNotifier {
     if (quantidadeSolicitada == null || quantidadeSolicitada! <= 0) {
       return 'Informe a quantidade solicitada';
     }
-    for (final processo in processos) {
-      if (processo.funcionario == null) {
-        return 'Escolha o responsável da etapa ${processo.descricao}';
-      }
-    }
     return null;
   }
 
@@ -242,7 +255,9 @@ class NewOperationPageProvider extends ChangeNotifier {
   }
 
   List<Map<String, dynamic>> get _gradeParaEnvio => gradePedido
-      .map((item) => {'descricao': item.descricao, 'quantidade': item.quantidade})
+      .map(
+        (item) => {'descricao': item.descricao, 'quantidade': item.quantidade},
+      )
       .toList();
 
   List<Map<String, dynamic>> _processosParaEnvio({bool comId = false}) {
@@ -254,11 +269,15 @@ class NewOperationPageProvider extends ChangeNotifier {
             'descricao': processo.descricao,
             'status': (processo.status ?? Status.naoIniciado).name,
             'valorComissao': processo.valorComissao,
-            'funcionario': {'id': processo.funcionario!.id},
+            if (processo.funcionario != null)
+              'funcionario': {'id': processo.funcionario!.id},
             'funcionariosAdicionais': [
               for (final item in processo.funcionariosAdicionais)
                 {'id': item.id},
             ],
+            'permiteCores': processo.permiteCores,
+            if (processo.permiteCores)
+              'linhas': [for (final linha in processo.linhas) linha.toMap()],
           },
         )
         .toList();

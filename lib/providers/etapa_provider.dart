@@ -32,8 +32,14 @@ class EtapaProvider extends ChangeNotifier {
     int? id,
     required String nome,
     required double valorComissao,
+    bool permiteCores = false,
   }) async {
-    await EtapaService.salvar(id: id, nome: nome, valorComissao: valorComissao);
+    await EtapaService.salvar(
+      id: id,
+      nome: nome,
+      valorComissao: valorComissao,
+      permiteCores: permiteCores,
+    );
     await carregar();
   }
 

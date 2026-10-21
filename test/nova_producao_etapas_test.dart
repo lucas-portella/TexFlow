@@ -73,7 +73,7 @@ void main() {
     cadastradas.clear();
     return NewOperationPageProvider(
       listarEtapas: () async => catalogo,
-      cadastrarEtapa: (nome, valor) async {
+      cadastrarEtapa: (nome, valor, permiteCores) async {
         cadastradas.add('$nome|$valor');
         return Etapa(id: 99, nome: nome, valorComissao: valor);
       },
@@ -242,9 +242,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('2,00'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('Escolha os funcionários'));
+    await tester.ensureVisible(find.text('Adicionar responsável').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Escolha os funcionários'));
+    await tester.tap(find.text('Adicionar responsável').last);
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(CheckboxListTile, 'João Costureiro'));
     await tester.pumpAndSettle();
@@ -253,7 +253,7 @@ void main() {
     await tester.tap(find.widgetWithText(ElevatedButton, 'Adicionar etapa'));
     await tester.pumpAndSettle();
 
-    expect(find.text('R\$ 2,00 por peça'), findsOneWidget);
+    expect(find.text('R\$ 2,00'), findsOneWidget);
     expect(pedido.processos.map((p) => p.descricao), [
       'Manga',
       'Gola',
@@ -269,9 +269,9 @@ void main() {
     final campos = find.byType(TextFormField);
     await tester.enterText(campos.at(0), 'Acabamento');
     await tester.enterText(campos.at(1), '1,10');
-    await tester.ensureVisible(find.text('Escolha os funcionários'));
+    await tester.ensureVisible(find.text('Adicionar responsável').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Escolha os funcionários'));
+    await tester.tap(find.text('Adicionar responsável').last);
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(CheckboxListTile, 'João Costureiro'));
     await tester.pumpAndSettle();

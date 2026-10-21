@@ -1,16 +1,36 @@
 import 'package:texflow/models/custo.dart';
 
+class RepasseLinha {
+  String? cor;
+  String? hex;
+  String? tamanho;
+  int quantidade;
+
+  RepasseLinha({this.cor, this.hex, this.tamanho, required this.quantidade});
+
+  factory RepasseLinha.fromMap(Map<String, dynamic> map) {
+    return RepasseLinha(
+      cor: map['cor'],
+      hex: map['hex'],
+      tamanho: map['tamanho'],
+      quantidade: (map['quantidade'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
 class RepasseEtapa {
   String etapa;
   double valorPorPeca;
   int? quantidade;
   double total;
+  List<RepasseLinha> linhas;
 
   RepasseEtapa({
     required this.etapa,
     required this.valorPorPeca,
     this.quantidade,
     required this.total,
+    this.linhas = const [],
   });
 
   factory RepasseEtapa.fromMap(Map<String, dynamic> map) {
@@ -19,6 +39,10 @@ class RepasseEtapa {
       valorPorPeca: (map['valorPorPeca'] as num?)?.toDouble() ?? 0,
       quantidade: (map['quantidade'] as num?)?.toInt(),
       total: (map['total'] as num?)?.toDouble() ?? 0,
+      linhas: [
+        for (final item in (map['linhas'] as List? ?? []))
+          RepasseLinha.fromMap(item as Map<String, dynamic>),
+      ],
     );
   }
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:texflow/models/cor.dart';
 import 'package:texflow/models/fechamento.dart';
+import 'package:texflow/shared/app_card.dart';
 import 'package:texflow/shared/app_colors.dart';
 import 'package:texflow/shared/formatters.dart';
 
@@ -20,8 +22,8 @@ class RepasseFuncionarioSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
       expand: false,
-      initialChildSize: 0.6,
-      maxChildSize: 0.9,
+      initialChildSize: 0.7,
+      maxChildSize: 0.95,
       builder: (context, controller) {
         return ListView(
           controller: controller,
@@ -40,40 +42,194 @@ class RepasseFuncionarioSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            for (final operacao in repasse.operacoes) ...[
-              Text(
-                '${operacao.codigo}'
-                '${operacao.cliente == null ? '' : ' · ${operacao.cliente}'}',
-                style: const TextStyle(fontWeight: FontWeight.w800),
+            for (final operacao in repasse.operacoes)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _CartaoDaOperacao(operacao: operacao),
               ),
-              Text(
-                '${operacao.quantidade} peças produzidas',
-                style: const TextStyle(fontSize: 12, color: AppColors.muted),
-              ),
-              const SizedBox(height: 8),
-              for (final etapa in operacao.etapas)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 3),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${etapa.etapa} · ${formatarMoeda(etapa.valorPorPeca)} × ${etapa.quantidade ?? operacao.quantidade}',
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ),
-                      Text(
-                        formatarMoeda(etapa.total),
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ],
-                  ),
-                ),
-              const Divider(height: 24),
-            ],
           ],
         );
       },
+    );
+  }
+}
+
+class _CartaoDaOperacao extends StatelessWidget {
+  final RepasseOperacao operacao;
+
+  const _CartaoDaOperacao({required this.operacao});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  '${operacao.codigo}'
+                  '${operacao.cliente == null ? '' : ' · ${operacao.cliente}'}',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.ink,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                formatarMoeda(operacao.total),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.success,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '${formatarInteiro(operacao.quantidade.toDouble())} peças produzidas',
+            style: const TextStyle(fontSize: 12, color: AppColors.muted),
+          ),
+          for (final etapa in operacao.etapas) ...[
+            const Divider(height: 22),
+            _BlocoDaEtapa(
+              etapa: etapa,
+              quantidadeDaOperacao: operacao.quantidade,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _BlocoDaEtapa extends StatelessWidget {
+  final RepasseEtapa etapa;
+  final int quantidadeDaOperacao;
+
+  const _BlocoDaEtapa({
+    required this.etapa,
+    required this.quantidadeDaOperacao,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final quantidade = etapa.quantidade ?? quantidadeDaOperacao;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    etapa.etapa,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    '${formatarMoeda(etapa.valorPorPeca)} × ${formatarInteiro(quantidade.toDouble())} peças',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.muted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              formatarMoeda(etapa.total),
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+        if (etapa.linhas.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.screenBackground,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              children: [
+                for (final linha in etapa.linhas) _LinhaDaCor(linha: linha),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _LinhaDaCor extends StatelessWidget {
+  final RepasseLinha linha;
+
+  const _LinhaDaCor({required this.linha});
+
+  @override
+  Widget build(BuildContext context) {
+    final nome = linha.cor ?? 'Sem cor';
+    final cor = linha.hex == null ? null : Cor.corDoHex(linha.hex!);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 18,
+            height: 18,
+            decoration: BoxDecoration(
+              color: cor ?? Colors.transparent,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: Colors.black26),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  [nome, ?linha.tamanho].join(' · '),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (linha.hex != null)
+                  Text(
+                    linha.hex!,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.muted,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '${formatarInteiro(linha.quantidade.toDouble())} peças',
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -11,6 +11,7 @@ import 'package:texflow/pages/atalhos_page.dart';
 import 'package:texflow/pages/clientes_page.dart';
 import 'package:texflow/pages/custos_page.dart';
 import 'package:texflow/pages/dashboard_page.dart';
+import 'package:texflow/pages/cores_page.dart';
 import 'package:texflow/pages/etapas_page.dart';
 import 'package:texflow/pages/fechamento_page.dart';
 import 'package:texflow/pages/funcionarios_page.dart';
@@ -20,6 +21,7 @@ import 'package:texflow/pages/minha_empresa_page.dart';
 import 'package:texflow/pages/modelo_form_page.dart';
 import 'package:texflow/pages/modo_operacao_page.dart';
 import 'package:texflow/pages/modelos_page.dart';
+import 'package:texflow/pages/tamanhos_page.dart';
 import 'package:texflow/pages/new_order_page.dart';
 import 'package:texflow/pages/operacao_page.dart';
 import 'package:texflow/pages/search_page.dart';
@@ -58,6 +60,8 @@ class AppRouter {
       return ModeloFormPage(modelo: modelo);
     },
     AppRoutes.etapas: (context) => const EtapasPage(),
+    AppRoutes.cores: (context) => const CoresPage(),
+    AppRoutes.tamanhos: (context) => const TamanhosPage(),
     AppRoutes.funcionarios: (context) => const FuncionariosPage(),
     AppRoutes.fechamento: (context) => const FechamentoPage(),
     AppRoutes.clientes: (context) => const ClientesPage(),

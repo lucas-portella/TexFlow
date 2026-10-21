@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:texflow/services/api_client.dart' as http;
+import 'package:texflow/models/linha_da_etapa.dart';
 import 'package:texflow/models/operacao.dart';
 import 'package:texflow/models/status.dart';
 import 'package:texflow/services/api_config.dart';
@@ -130,6 +131,36 @@ class OperacaoService {
     return Operacao.fromMap(decodificar(response));
   }
 
+  static Future<Operacao> informarLinhas({
+    required int processoId,
+    required int funcionarioId,
+    required List<LinhaDaEtapa> linhas,
+  }) async {
+    final response = await http.put(
+      Uri.parse('${ApiConfig.baseUrl}/api/processos/$processoId/linhas'),
+      headers: cabecalhosJson,
+      body: jsonEncode({
+        'funcionarioId': funcionarioId,
+        'linhas': [
+          for (final linha in linhas)
+            {
+              'corId': linha.cor?.id,
+              'tamanhoId': linha.tamanho?.id,
+              'quantidade': linha.quantidade,
+            },
+        ],
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        mensagemDeErro(response, 'Erro ao salvar as cores da etapa'),
+      );
+    }
+
+    return Operacao.fromMap(decodificar(response));
+  }
+
   static Future<Operacao> finalizar({
     required int operacaoId,
     required int quantidadeProduzida,
@@ -158,8 +189,10 @@ class OperacaoService {
     int? etapaId,
     String? nome,
     required double valorComissao,
-    required int funcionarioId,
+    int? funcionarioId,
     List<int> outrosFuncionarioIds = const [],
+    bool permiteCores = false,
+    List<LinhaDaEtapa> linhas = const [],
   }) async {
     final response = await http.post(
       Uri.parse('${ApiConfig.baseUrl}/api/operacoes/$operacaoId/etapas'),
@@ -170,6 +203,16 @@ class OperacaoService {
         'valorComissao': valorComissao,
         'funcionarioId': funcionarioId,
         'outrosFuncionarioIds': outrosFuncionarioIds,
+        'permiteCores': permiteCores,
+        'linhas': [
+          for (final linha in linhas)
+            {
+              'funcionarioId': linha.funcionario.id,
+              'corId': linha.cor?.id,
+              'tamanhoId': linha.tamanho?.id,
+              'quantidade': linha.quantidade,
+            },
+        ],
       }),
     );
 
