@@ -155,7 +155,7 @@ class _BlocoDaEtapa extends StatelessWidget {
             ),
           ],
         ),
-        if (etapa.linhas.isNotEmpty) ...[
+        if (etapa.linhas.any((linha) => linha.cor != null)) ...[
           const SizedBox(height: 8),
           Container(
             width: double.infinity,
@@ -170,7 +170,15 @@ class _BlocoDaEtapa extends StatelessWidget {
               ],
             ),
           ),
-        ],
+        ] else
+          for (final linha in etapa.linhas.where((l) => l.tamanho != null))
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                '${linha.tamanho} · ${formatarInteiro(linha.quantidade.toDouble())} peças',
+                style: const TextStyle(fontSize: 12, color: AppColors.muted),
+              ),
+            ),
       ],
     );
   }
@@ -183,7 +191,6 @@ class _LinhaDaCor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final nome = linha.cor ?? 'Sem cor';
     final cor = linha.hex == null ? null : Cor.corDoHex(linha.hex!);
 
     return Padding(
@@ -191,36 +198,22 @@ class _LinhaDaCor extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            width: 18,
-            height: 18,
-            decoration: BoxDecoration(
-              color: cor ?? Colors.transparent,
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: Colors.black26),
+          if (cor != null) ...[
+            Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: cor,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: Colors.black26),
+              ),
             ),
-          ),
-          const SizedBox(width: 10),
+            const SizedBox(width: 10),
+          ],
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  [nome, ?linha.tamanho].join(' · '),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                if (linha.hex != null)
-                  Text(
-                    linha.hex!,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.muted,
-                    ),
-                  ),
-              ],
+            child: Text(
+              [?linha.cor, ?linha.tamanho].join(' · '),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
           ),
           const SizedBox(width: 8),

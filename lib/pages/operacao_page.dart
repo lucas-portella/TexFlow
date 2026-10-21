@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:texflow/models/funcionario.dart';
+import 'package:texflow/models/linha_da_etapa.dart';
 import 'package:texflow/models/modo_operacao.dart';
 import 'package:texflow/models/operacao.dart';
 import 'package:texflow/models/processo_produtivo.dart';
@@ -21,6 +22,8 @@ import 'package:texflow/shared/operation_progress_card.dart';
 import 'package:texflow/shared/process_tile.dart';
 import 'package:texflow/shared/dados_do_responsavel_sheet.dart';
 import 'package:texflow/shared/quantidades_pendentes_dialog.dart';
+import 'package:texflow/shared/escolher_responsaveis_sheet.dart';
+import 'package:texflow/shared/responsaveis_com_cores.dart';
 import 'package:texflow/shared/section_title.dart';
 import 'package:texflow/shared/status_da_operacao_field.dart';
 
@@ -106,6 +109,48 @@ class _OperacaoPageState extends State<OperacaoPage> {
     await _executar(
       () => provider.informarLinhas(id, pessoa.id, linhas),
       sucesso: 'Peças salvas',
+    );
+  }
+
+  Future<void> _adicionarResponsavel(
+    OperacaoDetalheProvider provider,
+    ProcessoProdutivo processo,
+  ) async {
+    final id = processo.idProcessoProdutivo;
+    if (id == null) return;
+
+    if (processo.permiteCores) {
+      final escolhido = await escolherResponsavelECores(
+        context,
+        idsJaNaEtapa: processo.funcionarios.map((item) => item.id).toList(),
+      );
+      if (escolhido == null) return;
+
+      final linhas = [
+        for (final linha in processo.linhas) linha.copia(),
+        for (final cor in escolhido.cores)
+          LinhaDaEtapa(funcionario: escolhido.funcionario, cor: cor),
+      ];
+      await _executar(
+        () => provider.definirResponsaveis(id, linhas: linhas),
+        sucesso: 'Responsável adicionado',
+      );
+      return;
+    }
+
+    final escolhidos = await escolherResponsaveis(
+      context,
+      titulo: 'Responsáveis pela etapa ${processo.descricao}',
+      selecionados: processo.funcionarios,
+    );
+    if (escolhidos == null) return;
+
+    await _executar(
+      () => provider.definirResponsaveis(
+        id,
+        funcionarioIds: escolhidos.map((item) => item.id).toList(),
+      ),
+      sucesso: 'Responsáveis salvos',
     );
   }
 
@@ -285,6 +330,10 @@ class _OperacaoPageState extends State<OperacaoPage> {
                           ? (pessoa) =>
                                 _informarPessoa(provider, processo, pessoa)
                           : null,
+                      aoAdicionarResponsavel:
+                          editavel && processo.idProcessoProdutivo != null
+                          ? () => _adicionarResponsavel(provider, processo)
+                          : null,
                       selecionavel: editavel,
                       selecionado: selecionadas.contains(
                         processo.idProcessoProdutivo,
@@ -305,6 +354,10 @@ class _OperacaoPageState extends State<OperacaoPage> {
                           _podeInformarQuantidades(editavel, processo)
                           ? (pessoa) =>
                                 _informarPessoa(provider, processo, pessoa)
+                          : null,
+                      aoAdicionarResponsavel:
+                          editavel && processo.idProcessoProdutivo != null
+                          ? () => _adicionarResponsavel(provider, processo)
                           : null,
                     ),
                 if (editavel) ...[

@@ -186,6 +186,25 @@ class FakeDetalheProvider extends OperacaoDetalheProvider {
       ],
     });
   }
+
+  final List<Map<String, Object?>> responsaveisDefinidos = [];
+
+  @override
+  Future<void> definirResponsaveis(
+    int processoId, {
+    List<int> funcionarioIds = const [],
+    List<LinhaDaEtapa> linhas = const [],
+  }) async {
+    responsaveisDefinidos.add({
+      'processo': processoId,
+      'ids': funcionarioIds,
+      'linhas': [
+        for (final linha in linhas)
+          [linha.funcionario.id, linha.cor?.id, linha.quantidade],
+      ],
+    });
+  }
+
   final List<Map<String, Object?>> quantidadesInformadas = [];
 
   @override
@@ -193,7 +212,10 @@ class FakeDetalheProvider extends OperacaoDetalheProvider {
     int processoId,
     Map<int, int> quantidades,
   ) async {
-    quantidadesInformadas.add({'processo': processoId, 'quantidades': quantidades});
+    quantidadesInformadas.add({
+      'processo': processoId,
+      'quantidades': quantidades,
+    });
   }
 
   @override
@@ -358,10 +380,23 @@ void main() {
               {'id': 2, 'nome': 'Maria Bordadeira'},
             ],
             'linhas': [
-              linha(1, 'João Costureiro', 1, 'Branco', '#FFFFFF', 1120,
-                  tamanho: 'GG'),
-              linha(1, 'João Costureiro', 2, 'Vermelho', '#E5252A',
-                  completo ? 30 : null),
+              linha(
+                1,
+                'João Costureiro',
+                1,
+                'Branco',
+                '#FFFFFF',
+                1120,
+                tamanho: 'GG',
+              ),
+              linha(
+                1,
+                'João Costureiro',
+                2,
+                'Vermelho',
+                '#E5252A',
+                completo ? 30 : null,
+              ),
               linha(2, 'Maria Bordadeira', 1, 'Branco', '#FFFFFF', 500),
             ],
           },
@@ -394,9 +429,7 @@ void main() {
     });
 
     testWidgets('informar as peças de uma pessoa e salvar', (tester) async {
-      final provider = FakeDetalheProvider(
-        operacao: pedido(preenchido: true),
-      );
+      final provider = FakeDetalheProvider(operacao: pedido(preenchido: true));
       await _abrir(tester, provider, modo: ModoOperacao.porStatus);
 
       await tester.tap(find.byTooltip('Peças de João Costureiro'));
@@ -433,7 +466,10 @@ void main() {
       await tester.tap(find.text('Adicionar tamanho'));
       await tester.pumpAndSettle();
 
-      final tamanhos = find.widgetWithText(DropdownButtonFormField<int?>, 'Tamanho');
+      final tamanhos = find.widgetWithText(
+        DropdownButtonFormField<int?>,
+        'Tamanho',
+      );
       expect(tamanhos, findsNWidgets(2));
       final pecas = find.widgetWithText(TextField, 'Peças');
       await tester.enterText(pecas.at(0), '300');
@@ -449,7 +485,9 @@ void main() {
       ]);
     });
 
-    testWidgets('produção finalizada não deixa mexer nas peças', (tester) async {
+    testWidgets('produção finalizada não deixa mexer nas peças', (
+      tester,
+    ) async {
       await _abrir(
         tester,
         FakeDetalheProvider(
@@ -477,33 +515,34 @@ void main() {
       expect(find.text('500 peças'), findsOneWidget);
     });
 
-    testWidgets('etapa com cores: abre a pessoa já com as cores e salva os lotes', (
-      tester,
-    ) async {
-      final provider = FakeDetalheProvider(operacao: pedidoColorido());
-      await _abrir(tester, provider, modo: ModoOperacao.porStatus);
+    testWidgets(
+      'etapa com cores: abre a pessoa já com as cores e salva os lotes',
+      (tester) async {
+        final provider = FakeDetalheProvider(operacao: pedidoColorido());
+        await _abrir(tester, provider, modo: ModoOperacao.porStatus);
 
-      await tester.tap(find.byTooltip('Peças de João Costureiro'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.byTooltip('Peças de João Costureiro'));
+        await tester.pumpAndSettle();
 
-      expect(find.text('Cor'), findsNWidgets(2));
-      expect(find.text('Adicionar cor'), findsOneWidget);
+        expect(find.text('Cor'), findsNWidgets(2));
+        expect(find.text('Adicionar cor'), findsOneWidget);
 
-      final quantidades = find.widgetWithText(TextField, 'Peças');
-      await tester.enterText(quantidades.at(1), '300');
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Salvar'));
-      await tester.pumpAndSettle();
+        final quantidades = find.widgetWithText(TextField, 'Peças');
+        await tester.enterText(quantidades.at(1), '300');
+        await tester.tap(find.widgetWithText(ElevatedButton, 'Salvar'));
+        await tester.pumpAndSettle();
 
-      expect(provider.linhasInformadas, hasLength(1));
-      final salvo = provider.linhasInformadas.single;
-      expect(salvo['processo'], 1);
-      expect(salvo['funcionario'], 1);
-      final linhas = salvo['linhas'] as List<List<Object?>>;
-      expect(linhas, [
-        [1, 1, 1120],
-        [2, null, 300],
-      ]);
-    });
+        expect(provider.linhasInformadas, hasLength(1));
+        final salvo = provider.linhasInformadas.single;
+        expect(salvo['processo'], 1);
+        expect(salvo['funcionario'], 1);
+        final linhas = salvo['linhas'] as List<List<Object?>>;
+        expect(linhas, [
+          [1, 1, 1120],
+          [2, null, 300],
+        ]);
+      },
+    );
 
     testWidgets('etapa com cores: nova linha exige a cor antes de salvar', (
       tester,
@@ -529,7 +568,9 @@ void main() {
       final provider = FakeDetalheProvider(operacao: pedido());
       await _abrir(tester, provider);
 
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Concluir operação'));
+      await tester.tap(
+        find.widgetWithText(ElevatedButton, 'Concluir operação'),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Falta completar'), findsOneWidget);
@@ -548,7 +589,9 @@ void main() {
       final provider = FakeDetalheProvider(operacao: pedidoColorido());
       await _abrir(tester, provider);
 
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Concluir operação'));
+      await tester.tap(
+        find.widgetWithText(ElevatedButton, 'Concluir operação'),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Falta completar'), findsOneWidget);
@@ -568,7 +611,9 @@ void main() {
       });
       await _abrir(tester, FakeDetalheProvider(operacao: operacao));
 
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Concluir operação'));
+      await tester.tap(
+        find.widgetWithText(ElevatedButton, 'Concluir operação'),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('• Corte · sem responsável'), findsOneWidget);
@@ -596,7 +641,9 @@ void main() {
       );
       await _abrir(tester, provider);
 
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Concluir operação'));
+      await tester.tap(
+        find.widgetWithText(ElevatedButton, 'Concluir operação'),
+      );
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).last, '1650');
       await tester.tap(find.text('Finalizar'));
@@ -604,6 +651,101 @@ void main() {
 
       expect(find.text('Falta completar'), findsNothing);
       expect(provider.finalizacoes, [1650]);
+    });
+  });
+
+  group('adicionar responsável a uma etapa dos detalhes', () {
+    Operacao pedidoSemResponsavel({
+      bool comCores = false,
+      bool finalizado = false,
+    }) {
+      return Operacao.fromMap({
+        'id': 9,
+        'numero': '4521',
+        'status': 'emAndamento',
+        'dataFinalizacao': finalizado ? '2026-10-20' : null,
+        'gradePedido': [],
+        'gradeFabricada': [],
+        'processos': [
+          {
+            'id': 1,
+            'descricao': 'Bordado',
+            'status': 'naoIniciado',
+            'valorComissao': 0.5,
+            'permiteCores': comCores,
+            'funcionario': null,
+            'funcionariosAdicionais': [],
+            'linhas': [],
+          },
+        ],
+      });
+    }
+
+    testWidgets('etapa sem responsável oferece o botão e salva a escolha', (
+      tester,
+    ) async {
+      final provider = FakeDetalheProvider(operacao: pedidoSemResponsavel());
+      await _abrir(tester, provider);
+
+      expect(find.text('Sem responsável'), findsNothing);
+      await tester.tap(find.text('Adicionar responsável'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.widgetWithText(CheckboxListTile, 'Maria Bordadeira'),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.textContaining('Confirmar'));
+      await tester.pumpAndSettle();
+
+      expect(provider.responsaveisDefinidos, [
+        {
+          'processo': 1,
+          'ids': [2],
+          'linhas': <Object>[],
+        },
+      ]);
+    });
+
+    testWidgets('etapa com cores pede o responsável e as cores', (
+      tester,
+    ) async {
+      final provider = FakeDetalheProvider(
+        operacao: pedidoSemResponsavel(comCores: true),
+      );
+      await _abrir(tester, provider);
+
+      await tester.tap(find.text('Adicionar responsável'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(DropdownButtonFormField<int>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('João Costureiro').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(CheckboxListTile, 'Branco'));
+      await tester.tap(find.widgetWithText(CheckboxListTile, 'Vermelho'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.textContaining('Confirmar'));
+      await tester.pumpAndSettle();
+
+      expect(provider.responsaveisDefinidos, [
+        {
+          'processo': 1,
+          'ids': <int>[],
+          'linhas': [
+            [1, 1, null],
+            [1, 2, null],
+          ],
+        },
+      ]);
+    });
+
+    testWidgets('pedido finalizado não oferece o botão', (tester) async {
+      await _abrir(
+        tester,
+        FakeDetalheProvider(operacao: pedidoSemResponsavel(finalizado: true)),
+      );
+
+      expect(find.text('Adicionar responsável'), findsNothing);
+      expect(find.text('Sem responsável'), findsOneWidget);
     });
   });
 
@@ -659,7 +801,9 @@ void main() {
       expect(provider.excluidas, 1);
     });
 
-    testWidgets('com etapa iniciada ainda edita, mas não exclui', (tester) async {
+    testWidgets('com etapa iniciada ainda edita, mas não exclui', (
+      tester,
+    ) async {
       await _abrir(
         tester,
         FakeDetalheProvider(operacao: pedido(etapa: 'emAndamento')),
@@ -670,23 +814,24 @@ void main() {
       expect(find.byTooltip('Excluir pedido'), findsNothing);
     });
 
-    testWidgets('em andamento por status não exclui; por etapas exclui se nada começou', (
-      tester,
-    ) async {
-      await _abrir(
-        tester,
-        FakeDetalheProvider(operacao: pedido(status: 'emAndamento')),
-        modo: ModoOperacao.porStatus,
-      );
-      expect(find.byTooltip('Excluir pedido'), findsNothing);
+    testWidgets(
+      'em andamento por status não exclui; por etapas exclui se nada começou',
+      (tester) async {
+        await _abrir(
+          tester,
+          FakeDetalheProvider(operacao: pedido(status: 'emAndamento')),
+          modo: ModoOperacao.porStatus,
+        );
+        expect(find.byTooltip('Excluir pedido'), findsNothing);
 
-      await _abrir(
-        tester,
-        FakeDetalheProvider(operacao: pedido(status: 'emAndamento')),
-        modo: ModoOperacao.porEtapas,
-      );
-      expect(find.byTooltip('Excluir pedido'), findsOneWidget);
-    });
+        await _abrir(
+          tester,
+          FakeDetalheProvider(operacao: pedido(status: 'emAndamento')),
+          modo: ModoOperacao.porEtapas,
+        );
+        expect(find.byTooltip('Excluir pedido'), findsOneWidget);
+      },
+    );
 
     testWidgets('produção finalizada não edita nem exclui', (tester) async {
       await _abrir(
@@ -1050,7 +1195,10 @@ void main() {
       final campos = find.byType(TextFormField);
       await tester.enterText(campos.at(0), 'Barra');
       await tester.enterText(campos.at(1), '0,80');
-      await _escolherResponsaveis(tester, ['Maria Bordadeira', 'João Costureiro']);
+      await _escolherResponsaveis(tester, [
+        'Maria Bordadeira',
+        'João Costureiro',
+      ]);
 
       expect(find.byTooltip('Remover Maria Bordadeira'), findsOneWidget);
       expect(find.byTooltip('Remover João Costureiro'), findsOneWidget);
@@ -1087,10 +1235,14 @@ void main() {
       );
       expect(confirmar.onPressed, isNull);
 
-      await tester.tap(find.widgetWithText(CheckboxListTile, 'João Costureiro'));
+      await tester.tap(
+        find.widgetWithText(CheckboxListTile, 'João Costureiro'),
+      );
       await tester.pumpAndSettle();
       expect(find.text('Confirmar (1)'), findsOneWidget);
-      await tester.tap(find.widgetWithText(CheckboxListTile, 'João Costureiro'));
+      await tester.tap(
+        find.widgetWithText(CheckboxListTile, 'João Costureiro'),
+      );
       await tester.pumpAndSettle();
       expect(find.text('Confirmar'), findsOneWidget);
     });
@@ -1109,7 +1261,9 @@ void main() {
       expect(provider.etapasAdicionadas, isEmpty);
     });
 
-    testWidgets('o responsável é opcional ao adicionar a etapa', (tester) async {
+    testWidgets('o responsável é opcional ao adicionar a etapa', (
+      tester,
+    ) async {
       final provider = await abrirSheet(tester);
 
       await tester.tap(find.text('Nova etapa'));
@@ -1146,7 +1300,13 @@ void main() {
       await tester.tap(find.text('Podem haver mais cores para esta etapa'));
       await tester.pumpAndSettle();
       expect(find.text('Adicionar responsável e cor'), findsOneWidget);
-      expect(find.text('Adicionar responsável'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.text('Adicionar responsável'),
+        ),
+        findsNothing,
+      );
       expect(provider.etapasAdicionadas, isEmpty);
     });
 

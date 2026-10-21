@@ -68,6 +68,19 @@ class OperacaoDetalheProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> definirResponsaveis(
+    int processoId, {
+    List<int> funcionarioIds = const [],
+    List<LinhaDaEtapa> linhas = const [],
+  }) async {
+    _operacao = await OperacaoService.definirResponsaveis(
+      processoId: processoId,
+      funcionarioIds: funcionarioIds,
+      linhas: linhas,
+    );
+    notifyListeners();
+  }
+
   Future<void> excluir() async {
     final operacao = _operacao;
     if (operacao == null) return;

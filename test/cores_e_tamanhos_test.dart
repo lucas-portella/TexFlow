@@ -189,15 +189,21 @@ void main() {
       expect(etapa.linhas, hasLength(3));
     });
 
-    test('a mesma cor pode ter mais de um responsável e não duplica a linha', () {
-      final etapa = ProcessoProdutivo(descricao: 'Estampa', permiteCores: true);
+    test(
+      'a mesma cor pode ter mais de um responsável e não duplica a linha',
+      () {
+        final etapa = ProcessoProdutivo(
+          descricao: 'Estampa',
+          permiteCores: true,
+        );
 
-      etapa.adicionarCores(joao, [branco]);
-      etapa.adicionarCores(joao, [branco]);
-      etapa.adicionarCores(maria, [branco]);
+        etapa.adicionarCores(joao, [branco]);
+        etapa.adicionarCores(joao, [branco]);
+        etapa.adicionarCores(maria, [branco]);
 
-      expect(etapa.linhas, hasLength(2));
-    });
+        expect(etapa.linhas, hasLength(2));
+      },
+    );
 
     test('trocar as cores de alguém tira as que saíram e guarda o resto', () {
       final etapa = ProcessoProdutivo(descricao: 'Estampa', permiteCores: true);
@@ -287,8 +293,11 @@ void main() {
 
     test('etapa do catálogo lembra se aceita cores', () {
       expect(
-        Etapa.fromMap({'id': 1, 'nome': 'Estampa', 'permiteCores': true})
-            .permiteCores,
+        Etapa.fromMap({
+          'id': 1,
+          'nome': 'Estampa',
+          'permiteCores': true,
+        }).permiteCores,
         isTrue,
       );
       expect(Etapa.fromMap({'id': 2, 'nome': 'Corte'}).permiteCores, isFalse);
@@ -418,7 +427,10 @@ void main() {
       await tester.tap(find.text('abrir'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Podem haver mais cores para esta etapa'), findsOneWidget);
+      expect(
+        find.text('Podem haver mais cores para esta etapa'),
+        findsOneWidget,
+      );
       final campos = find.byType(TextFormField);
       await tester.enterText(campos.at(0), 'Estampa');
       await tester.enterText(campos.at(1), '0,50');
@@ -491,7 +503,9 @@ void main() {
       return pedido;
     }
 
-    testWidgets('só a etapa marcada oferece responsável com cor', (tester) async {
+    testWidgets('só a etapa marcada oferece responsável com cor', (
+      tester,
+    ) async {
       await abrir(tester);
 
       expect(find.text('Adicionar responsável e cor'), findsOneWidget);
@@ -501,42 +515,43 @@ void main() {
       expect(find.textContaining('por peça'), findsNothing);
     });
 
-    testWidgets('escolhe o responsável e as cores dele, já com os quadradinhos', (
-      tester,
-    ) async {
-      final pedido = await abrir(tester);
+    testWidgets(
+      'escolhe o responsável e as cores dele, já com os quadradinhos',
+      (tester) async {
+        final pedido = await abrir(tester);
 
-      await tester.tap(find.text('Adicionar responsável e cor'));
-      await tester.pumpAndSettle();
-      expect(find.text('Responsável e cores'), findsOneWidget);
+        await tester.tap(find.text('Adicionar responsável e cor'));
+        await tester.pumpAndSettle();
+        expect(find.text('Responsável e cores'), findsOneWidget);
 
-      var confirmar = tester.widget<ElevatedButton>(
-        find.widgetWithText(ElevatedButton, 'Confirmar'),
-      );
-      expect(confirmar.onPressed, isNull);
+        var confirmar = tester.widget<ElevatedButton>(
+          find.widgetWithText(ElevatedButton, 'Confirmar'),
+        );
+        expect(confirmar.onPressed, isNull);
 
-      await tester.tap(find.text('Funcionário'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('João Costureiro').last);
-      await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(CheckboxListTile, 'Branco'));
-      await tester.tap(find.widgetWithText(CheckboxListTile, 'Vermelho'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Funcionário'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('João Costureiro').last);
+        await tester.pumpAndSettle();
+        await tester.tap(find.widgetWithText(CheckboxListTile, 'Branco'));
+        await tester.tap(find.widgetWithText(CheckboxListTile, 'Vermelho'));
+        await tester.pumpAndSettle();
 
-      confirmar = tester.widget<ElevatedButton>(
-        find.widgetWithText(ElevatedButton, 'Confirmar (2)'),
-      );
-      expect(confirmar.onPressed, isNotNull);
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Confirmar (2)'));
-      await tester.pumpAndSettle();
+        confirmar = tester.widget<ElevatedButton>(
+          find.widgetWithText(ElevatedButton, 'Confirmar (2)'),
+        );
+        expect(confirmar.onPressed, isNotNull);
+        await tester.tap(find.widgetWithText(ElevatedButton, 'Confirmar (2)'));
+        await tester.pumpAndSettle();
 
-      expect(find.text('João Costureiro'), findsOneWidget);
-      expect(find.byType(CorQuadradinho), findsNWidgets(2));
-      final estampa = pedido.processos.first;
-      expect(estampa.funcionario?.nome, 'João Costureiro');
-      expect(estampa.linhas, hasLength(2));
-      expect(pedido.validar(), 'Informe o número do pedido');
-    });
+        expect(find.text('João Costureiro'), findsOneWidget);
+        expect(find.byType(CorQuadradinho), findsNWidgets(2));
+        final estampa = pedido.processos.first;
+        expect(estampa.funcionario?.nome, 'João Costureiro');
+        expect(estampa.linhas, hasLength(2));
+        expect(pedido.validar(), 'Informe o número do pedido');
+      },
+    );
 
     testWidgets('quem já está na etapa sai da lista, e dá para remover', (
       tester,
@@ -607,11 +622,7 @@ void main() {
                     tamanho: 'GG',
                     quantidade: 1120,
                   ),
-                  RepasseLinha(
-                    cor: 'Vermelho',
-                    hex: '#E5252A',
-                    quantidade: 30,
-                  ),
+                  RepasseLinha(cor: 'Vermelho', hex: '#E5252A', quantidade: 30),
                 ],
               ),
               RepasseEtapa(
@@ -619,6 +630,7 @@ void main() {
                 valorPorPeca: 0.1,
                 quantidade: 1000,
                 total: 100,
+                linhas: [RepasseLinha(tamanho: 'P', quantidade: 1000)],
               ),
             ],
           ),
@@ -651,7 +663,9 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('cada lote mostra cor, tamanho, código e peças', (tester) async {
+    testWidgets('cada lote mostra cor, tamanho, código e peças', (
+      tester,
+    ) async {
       await abrir(tester, escala: 0.5);
 
       expect(find.text('OP-4521 · Moda João'), findsOneWidget);
@@ -661,20 +675,23 @@ void main() {
       expect(find.text('R\$ 575,00'), findsOneWidget);
 
       expect(find.text('Branco · GG'), findsOneWidget);
-      expect(find.text('#FFFFFF'), findsOneWidget);
+      expect(find.text('#FFFFFF'), findsNothing);
       expect(find.text('1.120 peças'), findsOneWidget);
       expect(find.text('Vermelho'), findsOneWidget);
-      expect(find.text('#E5252A'), findsOneWidget);
+      expect(find.text('#E5252A'), findsNothing);
       expect(find.text('30 peças'), findsOneWidget);
 
       expect(find.text('Etiquetagem'), findsOneWidget);
       expect(find.text('R\$ 0,10 × 1.000 peças'), findsOneWidget);
     });
 
-    testWidgets('etapa sem cores não ganha caixa de lotes', (tester) async {
+    testWidgets('etapa sem cores mostra só tamanho e peças, sem caixa', (
+      tester,
+    ) async {
       await abrir(tester, escala: 0.5);
 
       expect(find.text('Sem cor'), findsNothing);
+      expect(find.text('P · 1.000 peças'), findsOneWidget);
       expect(find.byType(DraggableScrollableSheet), findsOneWidget);
     });
 
@@ -685,12 +702,10 @@ void main() {
 
       expect(tester.takeException(), isNull);
       final nome = tester.getRect(find.text('Branco · GG'));
-      final codigo = tester.getRect(find.text('#FFFFFF'));
       final pecas = tester.getRect(find.text('1.120 peças'));
       final etapa = tester.getRect(find.text('Estampa'));
       final total = tester.getRect(find.text('R\$ 575,00'));
 
-      expect(codigo.top, greaterThanOrEqualTo(nome.bottom - 1));
       expect(pecas.left, greaterThan(nome.right));
       expect(pecas.right, lessThanOrEqualTo(360));
       expect(total.right, lessThanOrEqualTo(360));
