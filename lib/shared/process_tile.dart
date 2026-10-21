@@ -16,6 +16,7 @@ class ProcessTile extends StatelessWidget {
   final bool selecionado;
   final VoidCallback? onTap;
   final void Function(Funcionario pessoa)? aoInformarPessoa;
+  final VoidCallback? aoAdicionarResponsavel;
 
   const ProcessTile({
     super.key,
@@ -25,6 +26,7 @@ class ProcessTile extends StatelessWidget {
     this.selecionado = false,
     this.onTap,
     this.aoInformarPessoa,
+    this.aoAdicionarResponsavel,
   });
 
   IconData _icone(Status status) {
@@ -102,7 +104,8 @@ class ProcessTile extends StatelessWidget {
                         ),
                       ),
                     ],
-                    if (responsaveis.isEmpty) ...[
+                    if (responsaveis.isEmpty &&
+                        aoAdicionarResponsavel == null) ...[
                       const SizedBox(height: 4),
                       Text(
                         processo.empresaResponsavel?.nomeFantasia ??
@@ -112,7 +115,7 @@ class ProcessTile extends StatelessWidget {
                           color: AppColors.muted,
                         ),
                       ),
-                    ] else ...[
+                    ] else if (responsaveis.isNotEmpty) ...[
                       const SizedBox(height: 6),
                       for (final pessoa in responsaveis)
                         _LinhaDoResponsavel(
@@ -123,6 +126,31 @@ class ProcessTile extends StatelessWidget {
                               : () => aoInformarPessoa!(pessoa),
                         ),
                     ],
+                    if (aoAdicionarResponsavel != null)
+                      Padding(
+                        padding: EdgeInsets.only(
+                          top: responsaveis.isEmpty ? 10 : 12,
+                        ),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: OutlinedButton.icon(
+                            onPressed: aoAdicionarResponsavel,
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(0, 36),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              textStyle: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            icon: const Icon(Icons.person_add_alt, size: 18),
+                            label: const Text('Adicionar responsável'),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),

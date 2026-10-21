@@ -161,6 +161,37 @@ class OperacaoService {
     return Operacao.fromMap(decodificar(response));
   }
 
+  static Future<Operacao> definirResponsaveis({
+    required int processoId,
+    List<int> funcionarioIds = const [],
+    List<LinhaDaEtapa> linhas = const [],
+  }) async {
+    final response = await http.put(
+      Uri.parse('${ApiConfig.baseUrl}/api/processos/$processoId/responsaveis'),
+      headers: cabecalhosJson,
+      body: jsonEncode({
+        'funcionarioIds': funcionarioIds,
+        'linhas': [
+          for (final linha in linhas)
+            {
+              'funcionarioId': linha.funcionario.id,
+              'corId': linha.cor?.id,
+              'tamanhoId': linha.tamanho?.id,
+              'quantidade': linha.quantidade,
+            },
+        ],
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        mensagemDeErro(response, 'Erro ao salvar os responsáveis da etapa'),
+      );
+    }
+
+    return Operacao.fromMap(decodificar(response));
+  }
+
   static Future<Operacao> finalizar({
     required int operacaoId,
     required int quantidadeProduzida,
