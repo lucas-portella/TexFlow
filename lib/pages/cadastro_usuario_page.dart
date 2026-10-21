@@ -163,7 +163,9 @@ class _CadastroUsuarioPageState extends State<CadastroUsuarioPage> {
               ),
               AppTextField(
                 label: _editando ? 'NOVA SENHA' : 'SENHA',
-                hintText: _editando ? 'Deixe em branco para manter' : '********',
+                hintText: _editando
+                    ? 'Deixe em branco para manter'
+                    : '********',
                 prefixIcon: Icons.lock_outline_rounded,
                 controller: _senhaController,
                 obscureText: true,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:texflow/models/funcionario.dart';
 import 'package:texflow/models/modo_operacao.dart';
 import 'package:texflow/models/operacao.dart';
 import 'package:texflow/models/processo_produtivo.dart';
@@ -18,7 +19,7 @@ import 'package:texflow/shared/grade_table.dart';
 import 'package:texflow/shared/operation_header.dart';
 import 'package:texflow/shared/operation_progress_card.dart';
 import 'package:texflow/shared/process_tile.dart';
-import 'package:texflow/shared/quantidades_da_etapa_sheet.dart';
+import 'package:texflow/shared/dados_do_responsavel_sheet.dart';
 import 'package:texflow/shared/quantidades_pendentes_dialog.dart';
 import 'package:texflow/shared/section_title.dart';
 import 'package:texflow/shared/status_da_operacao_field.dart';
@@ -85,26 +86,25 @@ class _OperacaoPageState extends State<OperacaoPage> {
     try {
       await provider.excluir();
       navigator.pop(true);
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Pedido excluído')),
-      );
+      messenger.showSnackBar(const SnackBar(content: Text('Pedido excluído')));
     } catch (e) {
       _avisar(e.toString());
     }
   }
 
-  Future<void> _informarQuantidades(
+  Future<void> _informarPessoa(
     OperacaoDetalheProvider provider,
     ProcessoProdutivo processo,
+    Funcionario pessoa,
   ) async {
     final id = processo.idProcessoProdutivo;
     if (id == null) return;
 
-    final quantidades = await pedirQuantidadesDaEtapa(context, processo);
-    if (quantidades == null) return;
+    final linhas = await pedirDadosDoResponsavel(context, processo, pessoa);
+    if (linhas == null) return;
 
     await _executar(
-      () => provider.informarQuantidades(id, quantidades),
+      () => provider.informarLinhas(id, pessoa.id, linhas),
       sucesso: 'Peças salvas',
     );
   }
@@ -280,11 +280,10 @@ class _OperacaoPageState extends State<OperacaoPage> {
                   if (modo == ModoOperacao.porEtapas)
                     ProcessTile(
                       processo: processo,
-                      aoInformarQuantidades: _podeInformarQuantidades(
-                        editavel,
-                        processo,
-                      )
-                          ? () => _informarQuantidades(provider, processo)
+                      aoInformarPessoa:
+                          _podeInformarQuantidades(editavel, processo)
+                          ? (pessoa) =>
+                                _informarPessoa(provider, processo, pessoa)
                           : null,
                       selecionavel: editavel,
                       selecionado: selecionadas.contains(
@@ -302,11 +301,10 @@ class _OperacaoPageState extends State<OperacaoPage> {
                     ProcessTile(
                       processo: processo,
                       mostrarStatus: false,
-                      aoInformarQuantidades: _podeInformarQuantidades(
-                        editavel,
-                        processo,
-                      )
-                          ? () => _informarQuantidades(provider, processo)
+                      aoInformarPessoa:
+                          _podeInformarQuantidades(editavel, processo)
+                          ? (pessoa) =>
+                                _informarPessoa(provider, processo, pessoa)
                           : null,
                     ),
                 if (editavel) ...[
@@ -324,11 +322,15 @@ class _OperacaoPageState extends State<OperacaoPage> {
                           etapaId: dados.etapa?.id,
                           nome: dados.nome,
                           valorComissao: dados.valor,
-                          funcionarioId: dados.funcionarios.first.id,
+                          funcionarioId: dados.funcionarios.isEmpty
+                              ? null
+                              : dados.funcionarios.first.id,
                           outrosFuncionarioIds: dados.funcionarios
                               .skip(1)
                               .map((item) => item.id)
                               .toList(),
+                          permiteCores: dados.permiteCores,
+                          linhas: dados.linhas,
                         ),
                       ),
                       icon: const Icon(Icons.add),

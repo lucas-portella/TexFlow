@@ -184,6 +184,8 @@ void main() {
           matching: find.byType(Scrollable),
         ),
       );
+      await tester.ensureVisible(find.text(item.$1));
+      await tester.pumpAndSettle();
       await tester.tap(find.text(item.$1));
       await tester.pumpAndSettle();
       expect(aberturas.last, item.$2);

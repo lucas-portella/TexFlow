@@ -32,6 +32,7 @@ class _EtapaFormSheetState extends State<EtapaFormSheet> {
         ? ''
         : widget.etapa!.valorComissao.toStringAsFixed(2).replaceAll('.', ','),
   );
+  late bool _permiteCores = widget.etapa?.permiteCores ?? false;
   bool _carregando = false;
 
   @override
@@ -62,6 +63,7 @@ class _EtapaFormSheetState extends State<EtapaFormSheet> {
         id: widget.etapa?.id,
         nome: _nomeController.text.trim(),
         valorComissao: lerValor(_valorController.text)!,
+        permiteCores: _permiteCores,
       );
       navigator.pop();
     } catch (e) {
@@ -110,6 +112,14 @@ class _EtapaFormSheetState extends State<EtapaFormSheet> {
                 decimal: true,
               ),
               validator: _validarValor,
+            ),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              value: _permiteCores,
+              onChanged: (valor) =>
+                  setState(() => _permiteCores = valor ?? false),
+              title: const Text('Podem haver mais cores para esta etapa'),
             ),
             AppPrimaryButton(
               label: 'Salvar',

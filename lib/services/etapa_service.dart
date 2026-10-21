@@ -23,9 +23,14 @@ class EtapaService {
     int? id,
     required String nome,
     required double valorComissao,
+    bool permiteCores = false,
   }) async {
     final url = '${ApiConfig.baseUrl}/api/etapas${id == null ? '' : '/$id'}';
-    final corpo = jsonEncode({'nome': nome, 'valorComissao': valorComissao});
+    final corpo = jsonEncode({
+      'nome': nome,
+      'valorComissao': valorComissao,
+      'permiteCores': permiteCores,
+    });
 
     final response = id == null
         ? await http.post(Uri.parse(url), headers: cabecalhosJson, body: corpo)

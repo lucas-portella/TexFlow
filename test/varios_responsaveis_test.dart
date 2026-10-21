@@ -93,8 +93,9 @@ void main() {
         ),
       );
 
-      expect(find.textContaining('João, Maria'), findsOneWidget);
-      expect(find.textContaining('por peça'), findsOneWidget);
+      expect(find.text('João'), findsOneWidget);
+      expect(find.text('Maria'), findsOneWidget);
+      expect(find.text('R\$ 0,30'), findsOneWidget);
     });
   });
 }

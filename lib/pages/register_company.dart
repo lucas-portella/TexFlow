@@ -26,7 +26,9 @@ class _CadastroEmpresaPageState extends State<CadastroEmpresaPage> {
   late final _nomeController = TextEditingController(
     text: widget.empresa?.nomeFantasia,
   );
-  late final _cnpjController = TextEditingController(text: widget.empresa?.cnpj);
+  late final _cnpjController = TextEditingController(
+    text: widget.empresa?.cnpj,
+  );
   late final _responsavelController = TextEditingController(
     text: widget.empresa?.contatoNome,
   );

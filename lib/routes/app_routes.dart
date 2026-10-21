@@ -20,6 +20,8 @@ class AppRoutes {
   static const modelos = '/modelos';
   static const modeloForm = '/modelo';
   static const etapas = '/etapas';
+  static const cores = '/cores';
+  static const tamanhos = '/tamanhos';
   static const funcionarios = '/funcionarios';
   static const fechamento = '/fechamento';
 }

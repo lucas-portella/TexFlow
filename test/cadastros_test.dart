@@ -41,8 +41,14 @@ class FakeEtapaProvider extends EtapaProvider {
     int? id,
     required String nome,
     required double valorComissao,
+    bool permiteCores = false,
   }) async {
-    salvos.add({'id': id, 'nome': nome, 'valor': valorComissao});
+    salvos.add({
+      'id': id,
+      'nome': nome,
+      'valor': valorComissao,
+      if (permiteCores) 'cores': true,
+    });
   }
 }
 
@@ -386,7 +392,8 @@ void main() {
     expect(find.text('OP-4521 · Moda João'), findsOneWidget);
     expect(find.text('OP-8 · Baby Chic'), findsOneWidget);
     expect(find.textContaining('OP-7'), findsNothing);
-    expect(find.text('Gola · R\$ 0,50 × 500'), findsOneWidget);
+    expect(find.text('Gola'), findsOneWidget);
+    expect(find.text('R\$ 0,50 × 500 peças'), findsOneWidget);
     expect(find.text('R\$ 250,00'), findsOneWidget);
     expect(find.text('R\$ 150,00'), findsOneWidget);
 

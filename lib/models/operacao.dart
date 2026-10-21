@@ -73,8 +73,11 @@ class Operacao {
   List<String> get pendenciasDeQuantidade => [
     for (final processo in processos)
       if (processo.status != Status.cancelado)
-        for (final funcionario in processo.semQuantidade)
-          '${processo.descricao} · ${funcionario.nome}',
+        if (processo.funcionarios.isEmpty)
+          '${processo.descricao} · sem responsável'
+        else
+          for (final funcionario in processo.semQuantidade)
+            '${processo.descricao} · ${funcionario.nome}',
   ];
 
   bool get nenhumaEtapaIniciada => processos.every(

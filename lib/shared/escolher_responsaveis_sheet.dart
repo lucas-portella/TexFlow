@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:texflow/models/funcionario.dart';
 import 'package:texflow/providers/funcionario_provider.dart';
 import 'package:texflow/shared/app_primary_button.dart';
-import 'package:texflow/shared/app_text_field.dart';
 import 'package:texflow/shared/funcionario_form_sheet.dart';
 
 Future<List<Funcionario>?> escolherResponsaveis(
@@ -14,10 +13,8 @@ Future<List<Funcionario>?> escolherResponsaveis(
   return showModalBottomSheet<List<Funcionario>>(
     context: context,
     isScrollControlled: true,
-    builder: (_) => _EscolherResponsaveisSheet(
-      titulo: titulo,
-      selecionados: selecionados,
-    ),
+    builder: (_) =>
+        _EscolherResponsaveisSheet(titulo: titulo, selecionados: selecionados),
   );
 }
 
@@ -37,7 +34,9 @@ class _EscolherResponsaveisSheet extends StatefulWidget {
 
 class _EscolherResponsaveisSheetState
     extends State<_EscolherResponsaveisSheet> {
-  late final List<int> _ids = widget.selecionados.map((item) => item.id).toList();
+  late final List<int> _ids = widget.selecionados
+      .map((item) => item.id)
+      .toList();
 
   void _alternar(Funcionario funcionario, bool marcado) {
     setState(() {
@@ -138,56 +137,4 @@ class _EscolherResponsaveisSheetState
       ),
     );
   }
-}
-
-class ResponsaveisField extends FormField<List<Funcionario>> {
-  ResponsaveisField({
-    super.key,
-    required List<Funcionario> selecionados,
-    required ValueChanged<List<Funcionario>> aoMudar,
-  }) : super(
-         initialValue: selecionados,
-         validator: (valor) => (valor == null || valor.isEmpty)
-             ? 'Escolha pelo menos um responsável'
-             : null,
-         builder: (state) {
-           final escolhidos = state.value ?? const <Funcionario>[];
-
-           Future<void> abrir() async {
-             final novos = await escolherResponsaveis(
-               state.context,
-               titulo: 'Responsáveis pela etapa',
-               selecionados: escolhidos,
-             );
-             if (novos == null) return;
-             state.didChange(novos);
-             aoMudar(novos);
-           }
-
-           return Column(
-             crossAxisAlignment: CrossAxisAlignment.start,
-             children: [
-               const AppFieldLabel('RESPONSÁVEIS'),
-               InkWell(
-                 onTap: abrir,
-                 borderRadius: BorderRadius.circular(14),
-                 child: InputDecorator(
-                   decoration: appFieldDecoration(
-                     hintText: 'Escolha os funcionários',
-                     prefixIcon: Icons.person_outline,
-                   ).copyWith(
-                     errorText: state.errorText,
-                     suffixIcon: const Icon(Icons.arrow_drop_down),
-                   ),
-                   isEmpty: escolhidos.isEmpty,
-                   child: Text(
-                     escolhidos.map((item) => item.nome).join(', '),
-                     style: const TextStyle(fontSize: 14, color: Colors.black),
-                   ),
-                 ),
-               ),
-             ],
-           );
-         },
-       );
 }

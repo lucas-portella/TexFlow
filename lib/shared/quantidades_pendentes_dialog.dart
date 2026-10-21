@@ -12,13 +12,13 @@ Future<void> avisarQuantidadesPendentes(
     context: context,
     builder: (context) {
       return AlertDialog(
-        title: const Text('Informe as peças de cada um'),
+        title: const Text('Falta completar'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Para concluir, falta informar as peças de:'),
+              const Text('Para concluir, falta completar:'),
               const SizedBox(height: 12),
               for (final item in mostradas)
                 Padding(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:texflow/models/linha_da_etapa.dart';
 import 'package:texflow/models/operacao.dart';
 import 'package:texflow/models/status.dart';
 import 'package:texflow/services/operacao_service.dart';
@@ -54,6 +55,19 @@ class OperacaoDetalheProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> informarLinhas(
+    int processoId,
+    int funcionarioId,
+    List<LinhaDaEtapa> linhas,
+  ) async {
+    _operacao = await OperacaoService.informarLinhas(
+      processoId: processoId,
+      funcionarioId: funcionarioId,
+      linhas: linhas,
+    );
+    notifyListeners();
+  }
+
   Future<void> excluir() async {
     final operacao = _operacao;
     if (operacao == null) return;
@@ -88,8 +102,10 @@ class OperacaoDetalheProvider extends ChangeNotifier {
     int? etapaId,
     String? nome,
     required double valorComissao,
-    required int funcionarioId,
+    int? funcionarioId,
     List<int> outrosFuncionarioIds = const [],
+    bool permiteCores = false,
+    List<LinhaDaEtapa> linhas = const [],
   }) async {
     final operacao = _operacao;
     if (operacao == null) return;
@@ -101,6 +117,8 @@ class OperacaoDetalheProvider extends ChangeNotifier {
       valorComissao: valorComissao,
       funcionarioId: funcionarioId,
       outrosFuncionarioIds: outrosFuncionarioIds,
+      permiteCores: permiteCores,
+      linhas: linhas,
     );
     notifyListeners();
   }

@@ -5,7 +5,7 @@ import 'package:texflow/models/item_grade.dart';
 import 'package:texflow/models/operacao.dart';
 import 'package:texflow/models/processo_produtivo.dart';
 import 'package:texflow/providers/funcionario_provider.dart';
-import 'package:texflow/shared/escolher_responsaveis_sheet.dart';
+import 'package:texflow/shared/responsaveis_com_cores.dart';
 import 'package:texflow/providers/modelo_provider.dart';
 import 'package:texflow/routes/app_routes.dart';
 import 'package:texflow/providers/new_operation_page_provider.dart';
@@ -488,21 +488,6 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
     );
   }
 
-  Future<void> escolherResponsavel(
-    BuildContext context,
-    ProcessoProdutivo processo,
-  ) async {
-    final controller = context.read<NewOperationPageProvider>();
-    final escolhidos = await escolherResponsaveis(
-      context,
-      titulo: 'Responsáveis pela etapa ${processo.descricao}',
-      selecionados: processo.funcionarios,
-    );
-    if (escolhidos == null) return;
-
-    controller.setResponsaveis(processo, escolhidos);
-  }
-
   Future<void> alterarValor(
     BuildContext context,
     ProcessoProdutivo processo,
@@ -531,8 +516,9 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
           TextField(
             controller: numeroController,
             onChanged: controller.setNumero,
-            enabled: !(controller.editando &&
-                (controller.emEdicao?.numero ?? '').isNotEmpty),
+            enabled:
+                !(controller.editando &&
+                    (controller.emEdicao?.numero ?? '').isNotEmpty),
             decoration: decoracao('Ex.: 4521', icone: Icons.tag),
           ),
           rotulo('VALOR DA PEÇA (R\$)'),
@@ -687,8 +673,6 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
   Widget itemProcesso(ProcessoProdutivo processo) {
     return Consumer<NewOperationPageProvider>(
       builder: (context, controller, child) {
-        final responsaveis = processo.funcionarios;
-
         return Container(
           margin: const EdgeInsets.only(top: 12),
           padding: const EdgeInsets.all(12),
@@ -711,7 +695,7 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
                     ),
                   ),
                   Text(
-                    '${formatarMoeda(processo.valorComissao ?? 0)} por peça',
+                    formatarMoeda(processo.valorComissao ?? 0),
                     style: const TextStyle(
                       color: roxo,
                       fontSize: 12,
@@ -741,43 +725,16 @@ class _NovoPedidoPageState extends State<NovoPedidoPage> {
                 ],
               ),
               const SizedBox(height: 4),
-              GestureDetector(
-                onTap: () => escolherResponsavel(context, processo),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: responsaveis.isEmpty ? roxo : Colors.white,
-                    border: responsaveis.isEmpty
-                        ? null
-                        : Border.all(color: borda),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.person_outline,
-                        size: 18,
-                        color: responsaveis.isEmpty ? Colors.white : cinza,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          responsaveis.isEmpty
-                              ? 'Selecionar responsável'
-                              : processo.nomesDosResponsaveis,
-                          style: TextStyle(
-                            color: responsaveis.isEmpty
-                                ? Colors.white
-                                : Colors.black,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+              if (processo.permiteCores)
+                ResponsaveisComCores(
+                  processo: processo,
+                  aoMudar: controller.atualizouEtapa,
+                )
+              else
+                ResponsaveisDaEtapa(
+                  processo: processo,
+                  aoMudar: controller.atualizouEtapa,
                 ),
-              ),
             ],
           ),
         );

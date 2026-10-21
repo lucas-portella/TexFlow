@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:texflow/models/etapa.dart';
 import 'package:texflow/models/funcionario.dart';
+import 'package:texflow/models/linha_da_etapa.dart';
+import 'package:texflow/models/processo_produtivo.dart';
 import 'package:texflow/providers/etapa_provider.dart';
 import 'package:texflow/providers/funcionario_provider.dart';
 import 'package:texflow/shared/app_dropdown_field.dart';
 import 'package:texflow/shared/app_primary_button.dart';
 import 'package:texflow/shared/app_text_field.dart';
-import 'package:texflow/shared/escolher_responsaveis_sheet.dart';
 import 'package:texflow/shared/formatters.dart';
+import 'package:texflow/shared/responsaveis_com_cores.dart';
 import 'package:texflow/shared/validators.dart';
 
 class DadosDaEtapaAdicionada {
@@ -16,12 +18,16 @@ class DadosDaEtapaAdicionada {
   final String? nome;
   final double valor;
   final List<Funcionario> funcionarios;
+  final bool permiteCores;
+  final List<LinhaDaEtapa> linhas;
 
   const DadosDaEtapaAdicionada({
     this.etapa,
     this.nome,
     required this.valor,
     required this.funcionarios,
+    this.permiteCores = false,
+    this.linhas = const [],
   });
 
   bool get ehNova => etapa == null;
@@ -65,8 +71,13 @@ class _AdicionarEtapaSheetState extends State<AdicionarEtapaSheet> {
   bool _nova = false;
   bool _escolheuOTipo = false;
   Etapa? _etapa;
-  List<Funcionario> _funcionarios = [];
+  final _simples = ProcessoProdutivo(descricao: '');
+  final _rascunho = ProcessoProdutivo(descricao: '', permiteCores: true);
+  bool _permiteCoresNova = false;
   bool _carregando = false;
+
+  bool get _usaCores =>
+      _nova ? _permiteCoresNova : (_etapa?.permiteCores ?? false);
 
   @override
   void initState() {
@@ -126,7 +137,11 @@ class _AdicionarEtapaSheetState extends State<AdicionarEtapaSheet> {
           etapa: _nova ? null : _etapa,
           nome: _nova ? _nomeController.text.trim() : null,
           valor: lerValor(_valorController.text)!,
-          funcionarios: _funcionarios,
+          funcionarios: _usaCores
+              ? _rascunho.funcionarios
+              : _simples.funcionarios,
+          permiteCores: _usaCores,
+          linhas: _usaCores ? _rascunho.linhas : const [],
         ),
       );
       navigator.pop();
@@ -212,6 +227,15 @@ class _AdicionarEtapaSheetState extends State<AdicionarEtapaSheet> {
                 onChanged: _escolherEtapa,
                 validator: (valor) => valor == null ? 'Escolha a etapa' : null,
               ),
+            if (_nova)
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                value: _permiteCoresNova,
+                onChanged: (valor) =>
+                    setState(() => _permiteCoresNova = valor ?? false),
+                title: const Text('Podem haver mais cores para esta etapa'),
+              ),
             AppTextField(
               label: 'VALOR POR PEÇA',
               hintText: '0,00',
@@ -222,10 +246,16 @@ class _AdicionarEtapaSheetState extends State<AdicionarEtapaSheet> {
               ),
               validator: _validarValor,
             ),
-            ResponsaveisField(
-              selecionados: _funcionarios,
-              aoMudar: (novos) => _funcionarios = novos,
-            ),
+            if (_usaCores)
+              ResponsaveisComCores(
+                processo: _rascunho,
+                aoMudar: () => setState(() {}),
+              )
+            else
+              ResponsaveisDaEtapa(
+                processo: _simples,
+                aoMudar: () => setState(() {}),
+              ),
             AppPrimaryButton(
               label: 'Adicionar etapa',
               carregando: _carregando,

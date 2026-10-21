@@ -254,8 +254,8 @@ void main() {
       expect(find.widgetWithText(TextField, '15/10/2026'), findsOneWidget);
       expect(find.text('Moda João'), findsOneWidget);
       expect(find.text('Blusa'), findsOneWidget);
-      expect(find.text('João Costureiro, Maria Cortadora'), findsOneWidget);
-      expect(find.text('João Costureiro'), findsOneWidget);
+      expect(find.text('Maria Cortadora'), findsOneWidget);
+      expect(find.text('João Costureiro'), findsNWidgets(2));
       expect(find.byTooltip('Remover etapa'), findsOneWidget);
     });
   });
