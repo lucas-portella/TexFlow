@@ -113,22 +113,17 @@ class _OperacaoPageState extends State<OperacaoPage> {
     OperacaoDetalheProvider provider,
     Operacao operacao,
   ) async {
+    final pendencias = operacao.pendenciasDeQuantidade;
+    if (pendencias.isNotEmpty) {
+      await avisarQuantidadesPendentes(context, pendencias: pendencias);
+      return;
+    }
+
     final dados = await pedirDadosDaFinalizacao(
       context,
       sugestao: operacao.quantidadeSolicitada,
     );
     if (dados == null) return;
-
-    final pendencias = operacao.pendenciasDeQuantidade;
-    if (pendencias.isNotEmpty) {
-      if (!mounted) return;
-      final seguir = await confirmarQuantidadesPendentes(
-        context,
-        quantidade: dados.quantidade,
-        pendencias: pendencias,
-      );
-      if (!seguir) return;
-    }
 
     await _executar(
       () => provider.finalizar(dados.quantidade, dados.dataEntrega),
