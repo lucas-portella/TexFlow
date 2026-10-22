@@ -70,8 +70,14 @@ class Operacao {
 
   bool get editavel => !finalizada && status != Status.cancelado;
 
-  List<String> get pendenciasDeQuantidade => [
-    for (final processo in processos)
+  List<String> get pendenciasDeQuantidade => _pendencias(processos);
+
+  List<String> pendenciasDasEtapas(Set<int> ids) => _pendencias(
+    processos.where((processo) => ids.contains(processo.idProcessoProdutivo)),
+  );
+
+  List<String> _pendencias(Iterable<ProcessoProdutivo> etapas) => [
+    for (final processo in etapas)
       if (processo.status != Status.cancelado)
         if (processo.funcionarios.isEmpty)
           '${processo.descricao} · sem responsável'

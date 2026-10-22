@@ -281,11 +281,12 @@ void main() {
     ]);
   });
 
-  testWidgets('modelos: lista com as etapas de cada modelo', (tester) async {
+  testWidgets('modelos: lista só os nomes, sem as etapas', (tester) async {
     await _abrir(tester, const ModelosPage());
 
     expect(find.text('Blusa'), findsOneWidget);
-    expect(find.text('Manga · Gola'), findsOneWidget);
+    expect(find.text('Manga · Gola'), findsNothing);
+    expect(find.text('Nenhuma etapa'), findsNothing);
     expect(find.text('Camisa'), findsOneWidget);
     expect(find.text('Inativo'), findsOneWidget);
   });
