@@ -42,11 +42,6 @@ class _ModelosPageState extends State<ModelosPage> {
     }
   }
 
-  String _resumoEtapas(Referencia modelo) {
-    if (modelo.etapas.isEmpty) return 'Nenhuma etapa';
-    return modelo.etapas.map((etapa) => etapa.nome).join(' · ');
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -83,7 +78,6 @@ class _ModelosPageState extends State<ModelosPage> {
                 for (final modelo in provider.modelos)
                   CadastroItemTile(
                     titulo: modelo.nome,
-                    subtitulo: _resumoEtapas(modelo),
                     selo: modelo.ativo
                         ? null
                         : const Text(

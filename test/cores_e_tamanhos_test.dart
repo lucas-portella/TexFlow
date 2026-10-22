@@ -7,6 +7,7 @@ import 'package:texflow/models/empresa.dart';
 import 'package:texflow/models/etapa.dart';
 import 'package:texflow/models/fechamento.dart';
 import 'package:texflow/models/funcionario.dart';
+import 'package:texflow/models/linha_da_etapa.dart';
 import 'package:texflow/models/processo_produtivo.dart';
 import 'package:texflow/models/referencia.dart';
 import 'package:texflow/models/tamanho.dart';
@@ -22,7 +23,9 @@ import 'package:texflow/providers/tamanho_provider.dart';
 import 'package:texflow/shared/cor_quadradinho.dart';
 import 'package:texflow/shared/etapa_form_sheet.dart';
 import 'package:texflow/shared/cor_form_sheet.dart';
+import 'package:texflow/shared/app_card.dart';
 import 'package:texflow/shared/paleta_de_cores.dart';
+import 'package:texflow/shared/process_tile.dart';
 import 'package:texflow/shared/seletor_de_cor.dart';
 import 'package:texflow/shared/repasse_funcionario_sheet.dart';
 
@@ -782,6 +785,66 @@ void main() {
       expect(total.right, lessThanOrEqualTo(360));
       expect(total.left, greaterThan(etapa.right));
       expect(nome.overlaps(pecas), isFalse);
+    });
+  });
+
+  group('etapa nos detalhes em tela de celular', () {
+    testWidgets('nome da cor não quebra e o botão cabe numa linha', (
+      tester,
+    ) async {
+      _tela(tester, const Size(360, 1200));
+      final ana = Funcionario(id: 1, nome: 'Ana');
+      final processo = ProcessoProdutivo(
+        descricao: 'Bordado',
+        valorComissao: 0.3,
+        permiteCores: true,
+        funcionario: ana,
+        linhas: [
+          LinhaDaEtapa(
+            funcionario: ana,
+            cor: Cor(id: 1, nome: 'Azul', hex: '#1E66F5'),
+          ),
+          LinhaDaEtapa(
+            funcionario: ana,
+            cor: Cor(id: 2, nome: 'Azul-marinho', hex: '#1B2A5C'),
+          ),
+          LinhaDaEtapa(
+            funcionario: ana,
+            cor: Cor(id: 3, nome: 'Amarelo', hex: '#FFD600'),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ProcessTile(
+                processo: processo,
+                aoInformarPessoa: (_) {},
+                aoAdicionarResponsavel: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      final azul = tester.getSize(find.text('Azul')).height;
+      expect(tester.getSize(find.text('Azul-marinho')).height, azul);
+      expect(tester.getSize(find.text('Amarelo')).height, azul);
+
+      final botao = find.widgetWithText(
+        OutlinedButton,
+        'Adicionar responsável',
+      );
+      final rotulo = tester.getSize(find.text('Adicionar responsável')).height;
+      expect(rotulo, lessThan(azul * 2));
+      final cartao = tester.getRect(find.byType(AppCard));
+      expect(tester.getRect(botao).right, closeTo(cartao.right - 14, 2));
+      expect(
+        tester.getRect(find.text('Azul-marinho')).left,
+        greaterThan(tester.getRect(find.text('Bordado')).left - 1),
+      );
     });
   });
 }

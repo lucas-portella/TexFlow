@@ -204,7 +204,16 @@ class _OperacaoPageState extends State<OperacaoPage> {
     });
   }
 
-  Future<void> _concluirSelecionadas(OperacaoDetalheProvider provider) async {
+  Future<void> _concluirSelecionadas(
+    OperacaoDetalheProvider provider,
+    Operacao operacao,
+  ) async {
+    final pendencias = operacao.pendenciasDasEtapas(_selecionadas);
+    if (pendencias.isNotEmpty) {
+      await avisarQuantidadesPendentes(context, pendencias: pendencias);
+      return;
+    }
+
     final ids = _selecionadas.toList();
     setState(_selecionadas.clear);
 
@@ -398,7 +407,8 @@ class _OperacaoPageState extends State<OperacaoPage> {
                       label: selecionadas.length == 1
                           ? 'Concluir 1 etapa selecionada'
                           : 'Concluir ${selecionadas.length} etapas selecionadas',
-                      onPressed: () => _concluirSelecionadas(provider),
+                      onPressed: () =>
+                          _concluirSelecionadas(provider, operacao),
                     ),
                     const SizedBox(height: 12),
                   ],

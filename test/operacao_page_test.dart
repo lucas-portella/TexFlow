@@ -953,6 +953,31 @@ void main() {
     expect(provider.statusDasEtapas, [Status.concluido]);
   });
 
+  testWidgets(
+    'por etapas: etapa sem peças não deixa concluir e diz o que falta',
+    (tester) async {
+      final operacao = _operacao();
+      operacao.processos.add(
+        _operacao().processos[1]
+          ..idProcessoProdutivo = 13
+          ..descricao = 'Acabamento'
+          ..status = Status.naoIniciado
+          ..definirResponsaveis([]),
+      );
+      final provider = FakeDetalheProvider(operacao: operacao);
+      await _abrir(tester, provider);
+
+      await tester.tap(find.text('Acabamento'));
+      await tester.pump();
+      await tester.tap(find.text('Concluir 1 etapa selecionada'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Falta completar'), findsOneWidget);
+      expect(find.text('• Acabamento · sem responsável'), findsOneWidget);
+      expect(provider.etapasAtualizadas, isEmpty);
+    },
+  );
+
   testWidgets('por etapas: tocar numa etapa concluída pergunta e reabre', (
     tester,
   ) async {
